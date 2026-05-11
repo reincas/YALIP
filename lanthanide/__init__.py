@@ -10,8 +10,8 @@ from .single import SingleElements, single_elements, init_single
 from .unit import ORBITAL, SPIN, MAGNETIC, LEN_SHELL, product_states, calc_unit, get_unit
 from .symmetry import SYMMETRY, Symmetry, SymmetryS2, SymmetryGR7, SymmetryGR5, SymmetryGG2, SymmetryL2, \
     SymmetryJ2, SymmetryJz, SymmetryTau, SymmetryNum, SymmetryList
-from .state import SYM_CHAIN_SLJM, Coupling, StateListProduct, StateListSLJM, StateListSLJ, StateListJ, \
-    StateProduct, StateSLJM, StateSLJ, StateJ, build_SLJM, init_states
+from .state import Coupling, StateListProduct, StateListSLJM, StateListSLJ, StateListJ, StateListM, \
+    StateProduct, StateSLJM, StateSLJ, StateJ, StateM, init_states
 from .matrix import normalise_radial, build_hamilton, reduced_matrix, Matrix, get_matrix
 from .lanthanide import LANTHANIDES, RADIAL, JUDD_OFELT, Lanthanide, CONST_e, CONST_eps0, CONST_me, CONST_h, CONST_c
 

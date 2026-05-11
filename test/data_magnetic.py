@@ -6,7 +6,7 @@
 #
 # Reduced SL matrix elements of the 1st order spin-spin and
 # spin-other-orbit (H5) and 2nd order spin-orbit (H6) interactions from
-# [24] and [25] for the f2 and f12 configurations.
+# [24] and [25] for the f2.a and f12 configurations.
 #
 ##########################################################################
 

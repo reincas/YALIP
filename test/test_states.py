@@ -38,14 +38,14 @@ def test_states(num):
     with Lanthanide(num) as ion:
         states = set()
         for state in ion.states(Coupling.SLJ):
-            S2 = state["S2"].str_value
-            L2 = state["L2"].str_value
-            W = state["GR/7"].str_value
+            S2 = state["S2"].repr
+            L2 = state["L2"].repr
+            W = state["GR/7"].repr
             sen = seniority(S2, W)
-            U = f"({state["GG/2"].str_value[1:-1]})"
-            LSnum = state["num"].str_value
+            U = f"({state["GG/2"].repr[1:-1]})"
+            LSnum = state["num"].repr
             LSnum = "" if LSnum == "0" else LSnum
-            LStau = state["tau"].str_value
+            LStau = state["tau"].repr
             LStau = "" if LStau == "*" else LStau.upper()
             state_str = f"{S2}{L2}{LSnum} {sen} {W} {U}{LStau}"
             states.add(state_str)

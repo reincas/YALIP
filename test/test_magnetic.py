@@ -5,7 +5,7 @@
 ##########################################################################
 #
 # Compare 1st order spin-spin and spin-other-orbit (H5) and 2nd order
-# spin-orbit (H6) matrix elements from the literature for the f2 and f12
+# spin-orbit (H6) matrix elements from the literature for the f2.a and f12
 # configurations with results from the Lanthanide package.
 #
 # Note: We use equation (3) in [24] for the comparison. This equation

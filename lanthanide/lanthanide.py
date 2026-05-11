@@ -200,7 +200,7 @@ class Lanthanide:
         self.unit_vault = init_unit(self.vault, "unit")
 
         # Initialize the electron states for SLJM and SLJ coupling
-        self._state_dict_ = init_states(self.vault, "states", self)
+        self._state_dict_ = init_states(self)
 
         # Initialize the cache group for higher-order tensor operator matrices
         self.matrix_vault = init_matrix(self.vault, "matrix")

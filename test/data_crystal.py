@@ -6,7 +6,7 @@
 #
 # Full sets of radial parameters, including C2v crystal field parameters
 # and calculated energy levels from Carnally 1989 paper for the
-# configurations f2, f3, f11, and f12. For the other configurations
+# configurations f2.a, f3, f11, and f12. For the other configurations
 # he used diagonalisation in "truncated" subspaces, which is different
 # from our approach.
 #

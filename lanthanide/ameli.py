@@ -8,7 +8,7 @@
 # matrices on Zenodo.
 #
 ##########################################################################
-
+import json
 from datetime import datetime, timedelta
 from functools import total_ordering
 import io
@@ -39,7 +39,7 @@ RECORDS = {
     12: 19158675,
     13: 19158677,
 }
-AMELI_PATH = Path(".", "ameli")
+AMELI_PATH = Path(__file__).resolve().parent / "ameli"
 
 
 ##########################################################################
@@ -196,18 +196,21 @@ def update(num_electrons):
     assert config_path.exists(), f"Folder '{config_path}' does not exist!"
 
     local_version, timestamp = get_local_version(config_path)
+    # print(f"Local version of configuration f{num_electrons}: {local_version} from {timestamp}")
     if local_version is not None and datetime.now() - timestamp < timedelta(hours=ZENODO_REFRESH):
+        # print("Local version is fresh.")
         return
 
     concept_id = RECORDS[num_electrons]
     zenodo_version = get_zenodo_version(concept_id)
+    # print(f"Zenodo record {concept_id} has version {zenodo_version}")
 
     if zenodo_version is None:
         assert local_version is not None, f"Cannot download data from Zenodo record {concept_id}!"
         return
 
     if local_version is None or local_version < zenodo_version:
-        filenames = ("product.zip", "slj.zip")
+        filenames = ("product.zip", "sljm.zip", "slj.zip")
         download_files(concept_id, filenames, config_path)
     else:
         update_version(local_version, config_path)
@@ -280,6 +283,10 @@ def decode_uint_array(meta, name):
     return array
 
 
+##########################################################################
+# Decode AMELI matrices
+##########################################################################
+
 def matrix_path(config_name, state_space, name):
     name = name.replace("/", "_").replace(",", "_")
     path = AMELI_PATH / config_name / state_space.lower() / f"{name}.zdc"
@@ -287,18 +294,16 @@ def matrix_path(config_name, state_space, name):
     return path
 
 
-def matrix_mtime(config_name, state_space, name):
-    path = matrix_path(config_name, state_space, name)
-    return path.stat().st_mtime
+# def matrix_mtime(config_name, state_space, name):
+#     path = matrix_path(config_name, state_space, name)
+#     return path.stat().st_mtime
 
 
-def read_matrix(config_name, state_space, name):
+def read_matrix(path, item):
     """ Return a float representation of the given AMELI matrix. """
 
-    path = matrix_path(config_name, state_space, name)
-
     with zipfile.ZipFile(path, "r") as z:
-        with z.open("data/matrix.hdf5") as f:
+        with z.open(item) as f:
             data = io.BytesIO(f.read())
 
     root = h5py.File(data, "r")
@@ -306,7 +311,6 @@ def read_matrix(config_name, state_space, name):
     sign = decode_uint_array(root, "sign")
     numerator = decode_uint_array(root, "numerator")
     denominator = decode_uint_array(root, "denominator")
-    print(type(numerator))
     values = decode_vector(sign, numerator, denominator)
 
     is_symmetric = root.attrs["isSymmetric"]
@@ -320,12 +324,41 @@ def read_matrix(config_name, state_space, name):
     return matrix
 
 
-if __name__ == "__main__":
-    num_electrons = 5
-    update(num_electrons)
-
+def read_f_matrix(num_electrons, coupling, name):
     config_name = f"f{num_electrons}"
-    state_space = "Product"
-    name = "C/2,-1"
-    path = AMELI_PATH / f"f{num_electrons}" / state_space
-    matrix = read_matrix(config_name, state_space, name)
+    state_space = coupling.name.lower()
+    assert state_space in ("slj", "sljm", "product")
+    path = matrix_path(config_name, state_space, name)
+    return read_matrix(path, "data/matrix.hdf5")
+
+
+def read_indices(path, item):
+    """ Return a float representation of the given AMELI matrix. """
+
+    with zipfile.ZipFile(path, "r") as z:
+        with z.open(item) as f:
+            data = io.BytesIO(f.read())
+            return np.array(h5py.File(data, "r")["indices"])
+
+
+def read_json(path, item):
+    """ Return a JSON file from a data container. """
+
+    with zipfile.ZipFile(path, "r") as z:
+        with z.open(item) as f:
+            return json.loads(f.read())
+
+
+def read_transform(num_electrons):
+    config_name = f"f{num_electrons}"
+    path = AMELI_PATH / config_name / "transform.zdc"
+    meta = read_json(path, "data/transform.json")
+    transform = {
+        "electronPool": meta["row_states"]["electronPool"],
+        "rowStates": read_indices(path, "data/row_states.hdf5"),
+        "tensorChain": meta["col_states"]["tensorChain"],
+        "irreducibleRepresentations": meta["col_states"]["irreducibleRepresentations"],
+        "colStates": read_indices(path, "data/col_states.hdf5"),
+        "transform": read_matrix(path, "data/matrix.hdf5"),
+    }
+    return transform

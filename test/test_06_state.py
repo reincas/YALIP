@@ -76,7 +76,7 @@ def run_state(num, num_slj):
     states = states.to_SLJM(ion)
     assert len(states) == math.comb(14, num)
     assert type(states[1]).__name__ == "StateSLJM"
-    for i, name in enumerate(states.sym_chain):
+    for i, name in enumerate(states.chain):
         result = SymmetryList(states.values[:, i], name).count()
         #print(f'"{name}": {result},')
         assert result == SYMS[num][name]

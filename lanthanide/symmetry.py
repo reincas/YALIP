@@ -16,135 +16,124 @@
 
 import math
 
-from .halfint import HalfInt
+#from .halfint import HalfInt
 
 # Letters used to represent orbital angular momenta
-CHR_ORBITAL = "SPDFGHIKLMNOQRTUVWXYZ"
+#CHR_ORBITAL = "SPDFGHIKLMNOQRTUVWXYZ"
 
 
-def casimir_Rk(w: tuple, d: int) -> int:
-    """ This function returns the eigenvalue of the Casimir operator of the rotational group Rd in d dimensions for
-    the given representation w. The representation is a tuple of integers. Its length is given by the rank of the
-    operator which is d/2 for even d and (d-1)/2 for odd d. """
-
-    assert len(w) == d // 2
-
-    sum = 0
-    for i in range(len(w)):
-        sum += w[i] * (w[i] + d - 2 - 2 * i)
-    return sum // 2
-
-
-def casimir_G2(u: tuple):
-    """ This function returns the integer eigenvalue of the Casimir operator of the special group G2 for the given
-    representation u. Due to the rank 2 of the operator, the representation is a 2-tuple of integers. """
-
-    return u[0] * u[0] + u[1] * u[1] + u[0] * u[1] + 5 * u[0] + 4 * u[1]
-
-
-
-def casimir_dict():
-    """ Return a dictionary mapping eigenvalues of the Casimir operators G(R5), G(R7) and G(G2) to their
-    representation tuples of integers. """
-
-    # Casimir operator of the rotational group in 5 dimensions R5
-    R5 = {}
-    for i in range(3):
-        for j in range(i + 1):
-            w = (i, j)
-            R5[casimir_Rk(w, 5)] = w
-
-    # Casimir operator of the rotational group in 7 dimensions R7
-    R7 = {}
-    for i in range(3):
-        for j in range(i + 1):
-            for k in range(j + 1):
-                w = (i, j, k)
-                R7[casimir_Rk(w, 7)] = w
-
-    # Casimir operator of the special group G2
-    G2 = {}
-    for i in range(5):
-        for j in range(i + 1):
-            u = (i, j)
-            G2[casimir_G2(u)] = u
-
-    # Return mapping tuple
-    return {"GR/5": R5, "GR/7": R7, "GG/2": G2}
-
-
-# Store Casimir mapping tuple as static module constant
-CASIMIR = casimir_dict()
+# def casimir_Rk(w: tuple, d: int) -> int:
+#     """ This function returns the eigenvalue of the Casimir operator of the rotational group Rd in d dimensions for
+#     the given representation w. The representation is a tuple of integers. Its length is given by the rank of the
+#     operator which is d/2 for even d and (d-1)/2 for odd d. """
+#
+#     assert len(w) == d // 2
+#
+#     sum = 0
+#     for i in range(len(w)):
+#         sum += w[i] * (w[i] + d - 2 - 2 * i)
+#     return sum // 2
+#
+#
+# def casimir_G2(u: tuple):
+#     """ This function returns the integer eigenvalue of the Casimir operator of the special group G2 for the given
+#     representation u. Due to the rank 2 of the operator, the representation is a 2-tuple of integers. """
+#
+#     return u[0] * u[0] + u[1] * u[1] + u[0] * u[1] + 5 * u[0] + 4 * u[1]
+#
+#
+#
+# def casimir_dict():
+#     """ Return a dictionary mapping eigenvalues of the Casimir operators G(R5), G(R7) and G(G2) to their
+#     representation tuples of integers. """
+#
+#     # Casimir operator of the rotational group in 5 dimensions R5
+#     R5 = {}
+#     for i in range(3):
+#         for j in range(i + 1):
+#             w = (i, j)
+#             R5[casimir_Rk(w, 5)] = w
+#
+#     # Casimir operator of the rotational group in 7 dimensions R7
+#     R7 = {}
+#     for i in range(3):
+#         for j in range(i + 1):
+#             for k in range(j + 1):
+#                 w = (i, j, k)
+#                 R7[casimir_Rk(w, 7)] = w
+#
+#     # Casimir operator of the special group G2
+#     G2 = {}
+#     for i in range(5):
+#         for j in range(i + 1):
+#             u = (i, j)
+#             G2[casimir_G2(u)] = u
+#
+#     # Return mapping tuple
+#     return {"GR/5": R5, "GR/7": R7, "GG/2": G2}
+#
+#
+# # Store Casimir mapping tuple as static module constant
+# CASIMIR = casimir_dict()
 
 
 class Symmetry:
     """ Abstract class for the representation of the state of a certain symmetry defined by its subclasses. Common
-    attributes are the operator name (self.name), the representation symbol (self.symbol), the eigenvalue (self.value),
-    an integer key (self.key) derived from the eigenvalue, and a representation string (self.str_value). """
+    attributes are the operator name (self.name), the representation symbol (self.symbol), and it irreducible
+    representation (self.repr). """
 
     name: str
     symbol: str
-    value: float
-    key: int
-    str_value: str
-
-    def _to_int_(self, value):
-        """ This method converts a given value to an integer. Subclasses derive the value from the eigenvalues of the
-        respective tensor operators. The integer value is used to identify the representation of the symmetry. A
-        ValueError is raised, if the given value is not approximately integer. This is used to detect potential errors
-        in the implementation of the respective tensor operators. """
-
-        key = round(value)
-        if abs(value - key) > 1e-5:
-            raise ValueError(f"{value} is not a legal eigenvalue of operator {self.name}!")
-        return key
+    # value: float
+    # key: int
+    repr: str
 
     def __str__(self):
-        """ Return the string representation of the symmetry state. """
+        """ Return the irreducible representation of the symmetry state. """
 
-        return self.str_value
+        return self.repr
 
-    def __lt__(self, other):
-        """ Return True if the symmetry state key is strictly less than that of the given symmetry state. """
-
-        if type(self) != type(other):
-            return NotImplemented
-        return self.key < other.key
-
-    def __le__(self, other):
-        """ Return True if the symmetry state key is less than or equal to that of the given symmetry state. """
-
-        if type(self) != type(other):
-            return NotImplemented
-        return self.key <= other.key
-
-    def __gt__(self, other):
-        """ Return True if the symmetry state key is strictly greater than that of the given symmetry state. """
-
-        if type(self) != type(other):
-            return NotImplemented
-        return self.key > other.key
-
-    def __ge__(self, other):
-        """ Return True if the symmetry state key is greater than or equal to that of the given symmetry state. """
-
-        if type(self) != type(other):
-            return NotImplemented
-        return self.key >= other.key
-
-    def __eq__(self, other):
-        """ Return True if the symmetry state key is equal to that of the given symmetry state. """
-
-        if type(self) != type(other):
-            return NotImplemented
-        return self.key == other.key
-
-    def __ne__(self, other):
-        """ Return True if the symmetry state key is not equal to that of the given symmetry state. """
-
-        if type(self) != type(other):
-            return NotImplemented
-        return self.key != other.key
+    # def __lt__(self, other):
+    #     """ Return True if the symmetry state key is strictly less than that of the given symmetry state. """
+    #
+    #     if type(self) != type(other):
+    #         return NotImplemented
+    #     return self.key < other.key
+    #
+    # def __le__(self, other):
+    #     """ Return True if the symmetry state key is less than or equal to that of the given symmetry state. """
+    #
+    #     if type(self) != type(other):
+    #         return NotImplemented
+    #     return self.key <= other.key
+    #
+    # def __gt__(self, other):
+    #     """ Return True if the symmetry state key is strictly greater than that of the given symmetry state. """
+    #
+    #     if type(self) != type(other):
+    #         return NotImplemented
+    #     return self.key > other.key
+    #
+    # def __ge__(self, other):
+    #     """ Return True if the symmetry state key is greater than or equal to that of the given symmetry state. """
+    #
+    #     if type(self) != type(other):
+    #         return NotImplemented
+    #     return self.key >= other.key
+    #
+    # def __eq__(self, other):
+    #     """ Return True if the symmetry state key is equal to that of the given symmetry state. """
+    #
+    #     if type(self) != type(other):
+    #         return NotImplemented
+    #     return self.key == other.key
+    #
+    # def __ne__(self, other):
+    #     """ Return True if the symmetry state key is not equal to that of the given symmetry state. """
+    #
+    #     if type(self) != type(other):
+    #         return NotImplemented
+    #     return self.key != other.key
 
 
 class SymmetryS2(Symmetry):
@@ -155,15 +144,16 @@ class SymmetryS2(Symmetry):
     name = "S2"
     symbol = "2S+1"
 
-    def __init__(self, value):
-        self.value = value
-        self.key = self._to_int_(math.sqrt(4 * self.value + 1))
-        self.str_value = (str(self.key))
-
-        if self.key % 2 == 0:
-            self.S = HalfInt(self.key - 1)
-        else:
-            self.S = (self.key - 1) // 2
+    def __init__(self, repr):
+        self.repr = repr
+        # self.value = value
+        # self.key = self._to_int_(math.sqrt(4 * self.value + 1))
+        # self.str_value = (str(self.key))
+        #
+        # if self.key % 2 == 0:
+        #     self.S = HalfInt(self.key - 1)
+        # else:
+        #     self.S = (self.key - 1) // 2
 
 
 class SymmetryGR7(Symmetry):

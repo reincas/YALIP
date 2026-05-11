@@ -6,7 +6,7 @@
 #
 # Compare calculated energy levels with data from Carnalls 1989 paper
 # based on the full set of radial integrals including crystal field
-# parameters for the C2v symmetry group for the configurations f2, f3,
+# parameters for the C2v symmetry group for the configurations f2.a, f3,
 # f11 and f12 in LaF3.
 #
 # Stark spritting is reproduced correctly, but it seems that Carnalls
