@@ -7,7 +7,7 @@ storage/
 extra/
 NielsonKoster/
 .src/yall/ameli/
-.src/yall/vault/
+.src/yall/matrix/
 
 logs
 *.log

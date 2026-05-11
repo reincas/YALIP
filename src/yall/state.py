@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright (c) 2025 Reinhard Caspary                                    #
+# Copyright (c) 2026 Reinhard Caspary                                    #
 # <reinhard.caspary@phoenixd.uni-hannover.de>                            #
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
@@ -16,7 +16,7 @@
 from enum import Enum
 import numpy as np
 
-from src.yall.ameli import read_transform
+from .ameli import read_transform
 
 SPECTRAL = "spdfghiklmnoqrtuvwxyz"
 
@@ -29,7 +29,7 @@ class Coupling(Enum):
     SLJM = 1
     SLJ = 2
     J = 3
-    JM = 4
+    M = 4
 
 
 def norm_magnetic(value):
@@ -417,8 +417,8 @@ class StateListM(StateList):
 # HDF5 cache interface
 ##########################################################################
 
-def init_states(num):
-    data = read_transform(num)
+def init_states(config_name):
+    data = read_transform(config_name)
 
     Product_States = StateListProduct(data["rowStates"], data["electronPool"])
 

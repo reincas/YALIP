@@ -9,14 +9,8 @@ from dataclasses import dataclass
 import numpy as np
 import h5py
 
-from .unit import ORBITAL, SPIN, LEN_SHELL, product_states, init_unit
-from .single import init_single
-from .matrix import normalise_radial, build_hamilton, reduced_matrix, get_matrix, init_matrix
+from .matrix import normalise_radial, build_hamilton, get_matrix
 from .state import Coupling, init_states
-
-# Folder with cache files is located in the installation directory of the yall package
-VAULT_PATH = Path(__file__).resolve().parent / "vaults"
-VAULT_NAME = "data-f{num:02d}.hdf5"
 
 # Symbols of the 15 Lanthanides. The configurations of the triply ionized atoms are 4f0 - 4f14
 LANTHANIDES = ["La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
@@ -166,48 +160,19 @@ class Lanthanide:
         SLJ (default). """
 
         assert isinstance(num, int)
-        assert 0 < num < LEN_SHELL
+        assert 0 < num < 14
         assert coupling is None or coupling in (Coupling.SLJ, Coupling.SLJM)
 
-        # Number of electrons, name and electron configuration of the yall ion
+        # Number of electrons, name and electron configuration of the lanthanide ion
         self.num = num
         self.name = f"{LANTHANIDES[num]}3+"
-        self.config = f"4f{num}"
-
-        # Quantum number of the orbital and spin angular momenta of the electrons
-        self.l = ORBITAL
-        self.s = SPIN
-
-        # Determinantal product states of the yall ion
-        self.product = product_states(self.num)
+        self.config = f"f{num}"
 
         # Coupling scheme for the states. Default is SLJ.
         self.coupling = coupling or Coupling.SLJ
 
-        # Create cache folder and open cache file
-        if not VAULT_PATH.exists():
-            VAULT_PATH.mkdir()
-        self.vault = h5py.File(VAULT_PATH / VAULT_NAME.format(num=num), "a")
-
-        # Make sure that the main validity flag exists in the cache
-        if "valid" not in self.vault.attrs:
-            self.vault.attrs["valid"] = True
-
-        # Initialize the support structure for the calculation of elementary tensor operator matrices
-        self.single = init_single(self.vault, "single", self.product)
-
-        # Initialize the cache group for unit tensor operator matrices
-        self.unit_vault = init_unit(self.vault, "unit")
-
         # Initialize the electron states for SLJM and SLJ coupling
         self._state_dict_ = init_states(self)
-
-        # Initialize the cache group for higher-order tensor operator matrices
-        self.matrix_vault = init_matrix(self.vault, "matrix")
-
-        # Cache is valid now
-        self.vault.attrs["valid"] = True
-        self.vault.flush()
 
         # Calculate energy levels and states in intermediate coupling based on the given radial integrals
         self._reduced_ = None

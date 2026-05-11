@@ -193,7 +193,8 @@ def update_version(version, path):
 
 def update(num_electrons):
     config_path = AMELI_PATH / f"f{num_electrons}"
-    assert config_path.exists(), f"Folder '{config_path}' does not exist!"
+    if not config_path.exists():
+        config_path.mkdir(parents=True)
 
     local_version, timestamp = get_local_version(config_path)
     # print(f"Local version of configuration f{num_electrons}: {local_version} from {timestamp}")
@@ -324,11 +325,10 @@ def read_matrix(path, item):
     return matrix
 
 
-def read_f_matrix(num_electrons, coupling, name):
-    config_name = f"f{num_electrons}"
+def get_ameli_matrix(name, config, coupling):
     state_space = coupling.name.lower()
     assert state_space in ("slj", "sljm", "product")
-    path = matrix_path(config_name, state_space, name)
+    path = matrix_path(config, state_space, name)
     return read_matrix(path, "data/matrix.hdf5")
 
 
@@ -349,9 +349,8 @@ def read_json(path, item):
             return json.loads(f.read())
 
 
-def read_transform(num_electrons):
-    config_name = f"f{num_electrons}"
-    path = AMELI_PATH / config_name / "transform.zdc"
+def read_transform(config):
+    path = AMELI_PATH / config / "transform.zdc"
     meta = read_json(path, "data/transform.json")
     transform = {
         "electronPool": meta["row_states"]["electronPool"],
