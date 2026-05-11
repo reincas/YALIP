@@ -14,7 +14,7 @@ from .single import init_single
 from .matrix import normalise_radial, build_hamilton, reduced_matrix, get_matrix, init_matrix
 from .state import Coupling, init_states
 
-# Folder with cache files is located in the installation directory of the lanthanide package
+# Folder with cache files is located in the installation directory of the yall package
 VAULT_PATH = Path(__file__).resolve().parent / "vaults"
 VAULT_NAME = "data-f{num:02d}.hdf5"
 
@@ -160,7 +160,7 @@ class Lanthanide:
     coupling as well as the line strengths of all radiative electric and magnetic dipole transitions. """
 
     def __init__(self, num: int, coupling=None, radial=None):
-        """ Initialize attributes, datastructures, and the file cache for the lanthanide ion with given number of
+        """ Initialize attributes, datastructures, and the file cache for the yall ion with given number of
         4f electrons. Calculate energy levels and states in intermediate coupling based on the given dictionary of
         radial integrals (default: Carnalls integrals for LaF3). The given coupling scheme may be SLJM or
         SLJ (default). """
@@ -169,7 +169,7 @@ class Lanthanide:
         assert 0 < num < LEN_SHELL
         assert coupling is None or coupling in (Coupling.SLJ, Coupling.SLJM)
 
-        # Number of electrons, name and electron configuration of the lanthanide ion
+        # Number of electrons, name and electron configuration of the yall ion
         self.num = num
         self.name = f"{LANTHANIDES[num]}3+"
         self.config = f"4f{num}"
@@ -178,7 +178,7 @@ class Lanthanide:
         self.l = ORBITAL
         self.s = SPIN
 
-        # Determinantal product states of the lanthanide ion
+        # Determinantal product states of the yall ion
         self.product = product_states(self.num)
 
         # Coupling scheme for the states. Default is SLJ.

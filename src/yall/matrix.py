@@ -478,7 +478,7 @@ class Matrix:
     transformation to another coupling scheme. """
 
     def __init__(self, ion, array: np.ndarray, name=None, coupling=None):
-        """ Initialize a new tensor operator matrix for the given lanthanide ion by the given numpy array in the
+        """ Initialize a new tensor operator matrix for the given yall ion by the given numpy array in the
         given coupling scheme (default Coupling.Product) with an optional name string. """
 
         assert isinstance(array, np.ndarray)
@@ -750,7 +750,7 @@ def build_hamilton(ion, radial: dict, coupling=None):
     assert coupling is None or coupling in (Coupling.SLJM, Coupling.SLJ)
     assert isinstance(radial, dict)
 
-    # Default is coupling of lanthanide ion
+    # Default is coupling of yall ion
     coupling = coupling or ion.coupling
 
     # Initialize empty hamiltonian matrix

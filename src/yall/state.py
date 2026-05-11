@@ -16,7 +16,7 @@
 from enum import Enum
 import numpy as np
 
-from lanthanide.ameli import read_transform
+from src.yall.ameli import read_transform
 
 SPECTRAL = "spdfghiklmnoqrtuvwxyz"
 

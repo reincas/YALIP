@@ -37,7 +37,7 @@ SPIN = HalfInt(1)
 # Magnetic quantum numbers ml and ms of electrons in the f shell in standard order
 MAGNETIC = [(ml, ms) for ml in range(ORBITAL, -ORBITAL - 1, -1) for ms in (SPIN, -SPIN)]
 
-# Number of different electrons in 14 for the f configurations of lanthanide ions
+# Number of different electrons in 14 for the f configurations of yall ions
 LEN_SHELL = len(MAGNETIC)
 
 

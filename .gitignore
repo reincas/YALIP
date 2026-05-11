@@ -2,14 +2,12 @@
 .test/
 .venv/
 attic/
-.test.py
 private/
 storage/
 extra/
 NielsonKoster/
-.lanthanide/vaults/
-.lanthanide/ameli/
-.lanthanide/vault/
+.src/yall/ameli/
+.src/yall/vault/
 
 logs
 *.log

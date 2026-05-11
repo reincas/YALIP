@@ -1,28 +1,20 @@
 # pyproject.toml
 [build-system]
-requires = [
-    "setuptools",
-	"NumPy",
-	"h5py",
-]
+requires = ["setuptools >= 61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = [
-    "lanthanide",
-]
-
 [project]
-name = "Lanthanide"
-version = "0.9.5"
+name = "yall"
+version = "0.1.0"
 authors = [
     { name = "Reinhard Caspary", email = "reinhard.caspary@phoenixd.uni-hannover.de"},
 ]
 description = "Python 3 package to calculate the energy levels of lanthanide ions."
 readme = "README.md"
+requires-python = ">=3.8"
 dependencies = [
-    'NumPy>=1.15',
-    'h5py',
+    'numpy == 2.4.4',
+    'h5py == 3.16.0',
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -30,3 +22,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["yall"]
