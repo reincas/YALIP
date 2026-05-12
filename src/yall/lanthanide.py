@@ -9,7 +9,7 @@ import logging
 import numpy as np
 
 from .ameli import update
-from .matrix import normalise_radial, build_hamilton, get_matrix
+from .matrix import get_matrix, get_energies
 from .state import Coupling, init_states, StateListJ, StateListM
 
 logger = logging.getLogger("yall.lanthanide")
@@ -181,7 +181,6 @@ class Lanthanide:
 
         # Calculate energy levels and states in intermediate coupling based on the given radial integrals
         self.radial = None
-        self.hamilton = None
         self.energies = None
         self.set_radial(radial or RADIAL[self.name])
 
@@ -237,23 +236,19 @@ class Lanthanide:
         if radial == self.radial:
             return
 
-        # Store radial integrals and use them to build the full perturbation hamiltonian
-        self.radial = normalise_radial(radial)
-        self.hamilton = build_hamilton(self.config, self.radial, self.coupling)
-
         # Diagonalise the Hamiltonian and get energies and intermediate coupling vectors
-        self.energies, transform = np.linalg.eigh(self.hamilton)
+        self.radial = radial
+        self.energies, transform = get_energies(self.config, self.radial, self.states(self.coupling))
 
         # Adjust the energy level of the ground state
         if "base" in self.radial:
             self.energies += self.radial["base"] - self.energies[0]
 
         # Build and store the StateListJ object of the electron states in intermediate coupling
-        key = Coupling.Intermediate.name
         if self.coupling == Coupling.SLJ:
-            self.state_dict[key] = StateListJ(self.state_dict["SLJ"], self.energies, transform)
+            self.state_dict["Intermediate"] = StateListJ(self.state_dict["SLJ"], self.energies, transform)
         else:
-            self.state_dict[key] = StateListM(self.state_dict["SLJM"], self.energies, transform)
+            self.state_dict["Intermediate"] = StateListM(self.state_dict["SLJM"], self.energies, transform)
 
         # Invalidate previously calculated reduced matrix elements
         self._reduced_ = None

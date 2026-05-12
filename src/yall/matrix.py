@@ -23,7 +23,7 @@ import logging
 import numpy as np
 
 from .ameli import MATRIX_PATH, get_ameli_matrix
-from .state import Coupling
+from .state import Coupling, StateList
 
 logger = logging.getLogger("yall.matrix")
 
@@ -125,26 +125,39 @@ def normalise_radial(radial):
     return new_radial
 
 
-def build_hamilton(config, radial: dict, coupling: Coupling):
-    """ Build and return the matrix of a perturbation hamiltonian operator as linear combination of the interaction
-    hamiltonians and factors specified in the dictionary radial in the given coupling scheme."""
+def get_energies(config:str, radial: dict, states: StateList):
+    """ Build and diagonalize the matrix of a perturbation hamiltonian operator as linear combination of the
+    interaction hamiltonians and factors specified in the dictionary radial in the given coupling scheme."""
 
-    assert coupling in (Coupling.SLJM, Coupling.SLJ)
+    assert states.coupling in (Coupling.SLJM, Coupling.SLJ)
     assert isinstance(radial, dict)
 
+    if any(k.startswith("Hcf/") for k in radial.keys()):
+        assert states.coupling == Coupling.SLJM, "Crystal field parameters require SLJM coupling!"
+
     # Build linear combination specified in the radial dictionary
-    matrix = 0.0
-    for name in radial:
-        if name == "base":
-            continue
-        if name[:1] != "H":
-            continue
-        if name[:3] == "Hcf" and coupling != Coupling.SLJM:
-            raise ValueError("Crystal field interaction requires SLJM coupling!")
-        matrix += radial[name] * get_matrix(name, config, coupling)
+    radial = normalise_radial(radial)
+    names = [(v, k) for k, v in radial.items() if k != "base"]
+
+    # Build the perturbation Hamiltonian
+    if states.coupling == Coupling.SLJM:
+        H = get_matrix(names, config, Coupling.Product)
+    else:
+        H = get_matrix(names, config, Coupling.SLJ)
+
+    # Diagonalise the Hamiltonian and get energies and intermediate coupling vectors
+    energies, transform = np.linalg.eigh(H)
+
+    # Adjust the energy level of the ground state
+    if "base" in radial:
+        energies += radial["base"] - energies[0]
+
+    # Back transformation to SLJM states
+    if states.coupling == Coupling.SLJM:
+        transform = states.transform.T @ transform
 
     # Return the total hamiltonian as Matrix object in the given coupling scheme
-    return matrix
+    return energies, transform
 
 
 def get_matrix(name, config, coupling):

@@ -50,7 +50,10 @@ class StateList:
     """ Abstract class for a list of electron states in a certain coupling scheme. The abstract defines some common
     methods acting on the common attribute states, which contains the list of State objects. """
 
+    coupling = None
+    coupling_base = None
     states = []
+    transform = None
 
     def __len__(self):
         """ Returns the number of states. """
@@ -85,6 +88,8 @@ class StateList:
 
 class StateProduct:
     """ Class for a determinantal product state. """
+
+    coupling = Coupling.Product
 
     def __init__(self, quantum):
         """ Store the quantum numbers of the electrons of the state. """
@@ -127,6 +132,8 @@ class StateProduct:
 class StateListProduct(StateList):
     """ Class containing a list of StateProduct objects representing an electron configuration. """
 
+    coupling = Coupling.Product
+
     def __init__(self, values, pool):
         """ Store the given array of electron indices and build the list of StateProduct objects. """
 
@@ -153,6 +160,8 @@ class StateListProduct(StateList):
 class StateSLJM:
     """ Class for an electron state in SLJM coupling following the chain of symmetry operators. """
 
+    coupling = Coupling.SLJM
+
     def __init__(self, quantum):
         self.quantum = quantum
         self.J = quantum["J2"]
@@ -160,12 +169,12 @@ class StateSLJM:
     def short(self):
         """ Return a short string representation of the state. """
 
-        return f"{self['S2']}{self['L2']}{self['num']} {self['J2']} {self['Jz']}"
+        return f"{self['S2']}{self['L2']}{self['num']}_{self['J2']}_{self['Jz']}"
 
     def long(self):
         """ Return a long string representation of the state. """
 
-        return f"{self['S2']}{self['L2']}{self['num']} {self['sen']} {self['C7']}{self['C2']}{self['tau']} {self['J2']} {self['Jz']}"
+        return f"{self['S2']}{self['L2']}{self['num']}_{self['sen']}_{self['C7']}{self['C2']}{self['tau']}_{self['J2']}_{self['Jz']}"
 
     def __getitem__(self, sym: str):
         """ Return the irreducible representation of the given symmetry operator. """
@@ -182,6 +191,8 @@ class StateSLJM:
 
 class StateListSLJM(StateList):
     """ Class containing a list of StateSLJM objects representing an electron configuration. """
+
+    coupling = Coupling.SLJM
 
     def __init__(self, values, chain, repr, transform):
         assert isinstance(values, np.ndarray)
@@ -208,6 +219,8 @@ class StateListSLJM(StateList):
 class StateSLJ:
     """ Class for an electron state in SLJ coupling following the chain of symmetry operators. """
 
+    coupling = Coupling.SLJ
+
     def __init__(self, quantum):
         self.quantum = quantum
         self.J = quantum["J2"]
@@ -215,12 +228,12 @@ class StateSLJ:
     def short(self):
         """ Return a short string representation of the state. """
 
-        return f"{self['S2']}{self['L2']}{self['num']} {self['J2']}"
+        return f"{self['S2']}{self['L2']}{self['num']}_{self['J2']}"
 
     def long(self):
         """ Return a long string representation of the state. """
 
-        return f"{self['S2']}{self['L2']}{self['num']} {self['sen']} {self['C7']}{self['C2']}{self['tau']} {self['J2']}"
+        return f"{self['S2']}{self['L2']}{self['num']}_{self['sen']}_{self['C7']}{self['C2']}{self['tau']}_{self['J2']}"
 
     def __getitem__(self, sym: str):
         """ Return the irreducible representation of the given symmetry operator. """
@@ -237,6 +250,8 @@ class StateSLJ:
 
 class StateListSLJ(StateList):
     """ Class containing a list of StateSLJ objects representing an electron configuration. """
+
+    coupling = Coupling.SLJ
 
     def __init__(self, values, chain, repr, transform):
         assert isinstance(values, np.ndarray)
@@ -259,6 +274,9 @@ class StateListSLJ(StateList):
 
 class StateJ:
     """ Class for an electron state in an intermediate coupling of SLJ states. """
+
+    coupling = Coupling.Intermediate
+    coupling_base = Coupling.SLJ
 
     def __init__(self, energy, values, states):
         """ Store the energy level of the state and the vector (values) for the linear combination of the given
@@ -308,6 +326,9 @@ class StateJ:
 class StateListJ(StateList):
     """ Class containing a list of StateJ objects representing an electron state in an intermediate SLJ coupling. """
 
+    coupling = Coupling.Intermediate
+    coupling_base = Coupling.SLJ
+
     def __init__(self, slj_states, energies, transform):
         """ Store the given StateListSLJ object with the list of related SLJ states, the energies of all states and
         the transformation matrix representing the linear combination of the SLJ states. """
@@ -347,6 +368,9 @@ class StateListJ(StateList):
 
 class StateM:
     """ Class for an electron state in an intermediate coupling of SLJM states. """
+
+    coupling = Coupling.Intermediate
+    coupling_base = Coupling.SLJM
 
     def __init__(self, energy, values, states):
         """ Store the energy level of the state and the vector (values) for the linear combination of the given
@@ -392,6 +416,9 @@ class StateM:
 class StateListM(StateList):
     """ Class containing a list of StateJM objects representing an electron state in an intermediate coupling
     of SLJM states. """
+
+    coupling = Coupling.Intermediate
+    coupling_base = Coupling.SLJM
 
     def __init__(self, sljm_states, energies, transform):
         """ Store the given StateListSLJM object with the list of related SLJM states, the energies of all states and
