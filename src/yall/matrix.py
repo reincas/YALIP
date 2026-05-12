@@ -28,6 +28,21 @@ from .state import Coupling
 
 logger = logging.getLogger("yall.matrix")
 
+# Translation of alternative names to canonical names
+ALT_NAMES = {
+    "Lz": "L/0",
+    "Sz": "S/0",
+    "Jz": "J/0",
+    "L2": "LL",
+    "S2": "SS",
+    "J2": "JJ",
+    "C7": "CR",
+    "C5": "CR",
+    "H3/0": "LL",
+    "H3/1": "C2",
+    "H3/2": "CR",
+}
+
 
 def normalise_radial(radial):
     """ Convert an alternative parameter set into the standard set of radial integrals "H1"-"H6". """
@@ -148,6 +163,9 @@ def get_matrix(name, config, coupling):
     path = MATRIX_PATH / config
     if not path.exists():
         path.mkdir(parents=True)
+
+    if name in ALT_NAMES:
+        name = ALT_NAMES[name]
 
     vault = path / f"{coupling.name.lower()}.hdf5"
     with h5py.File(vault, "a") as fp:
