@@ -116,14 +116,19 @@ for LaF<sub>3</sub>.
 
 The Lanthanide object builds the matrix of the total perturbation Hamiltonian and diagonalises it, which results
 in the energy level and the SLJ composition of each state in intermediate coupling.
-The process is accelerated by diagonalising the much smaller J sub-spaces individually.
 Each state in intermediate coupling is a mixture of different SLJ states with the same total angular momentum J.
-You can access all state objects in the list `Lanthanide.intermediate.states` with the ground state in first position.
-This code delivers energy, weight factors and the respective SLJ components of the first excited state:
+You can access all energies in the list `ion.energies` with the ground state in first position.
+
+Using `Coupling.Intermediate` an object holding all intermediate states is delivered by the method
+`ion.states(coupling)`.
+The following code prints the energy of the first excited state, and then weight factor and state object of the most
+important SLJ component:
 
 ```
-state = ion.intermediate.states[1]
-print(state.energy, state.weights, state.states)
+states = ion.states(Coupling.Intermediate)
+state = states[1]
+print(state.energy)
+print(state.weights[0], state.states[0])
 ```
 
 For each state object there is a long string representation, which you can access by `str(state)` or

@@ -40,7 +40,7 @@ if __name__ == "__main__":
     with Lanthanide(num, coupling, radial) as ion:
         print(ion)
         matrix = ion.matrix(name)
-        for state in ion.str_levels():
+        for state in ion.str_levels(min_weight=0.05):
             print(state)
 
     # with Lanthanide(num, coupling, radial) as ion:
