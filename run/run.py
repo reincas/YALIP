@@ -8,7 +8,7 @@ import logging
 import numpy as np
 from typing import cast, Any
 
-from yall import Lanthanide, Coupling
+from yall import Lanthanide, Coupling, MATERIAL
 
 logger = logging.getLogger("run")
 
@@ -33,8 +33,10 @@ def init_logger(file_name=None, level=logging.INFO):
 if __name__ == "__main__":
     init_logger(level=logging.DEBUG)
 
+    material = MATERIAL["Pb:ZBLAN"]
     radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, "H2": 728.18,
               "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
+    judd_ofelt = {"JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
 
     num = 2
     config = f"f{num}"
@@ -50,7 +52,13 @@ if __name__ == "__main__":
         np.set_printoptions(formatter=cast(Any, {'float': '{:7.4f}'.format}), linewidth=120)
         print(R)
 
-        judd_ofelt = {"JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
-        strength = ion.line_strengths(judd_ofelt)
-        print(strength.Sed[1:, 0])
-        print(strength.Smd[1:, 0])
+        f = ion.oscillator_strengths(judd_ofelt, material)
+        f = np.column_stack((f.ed[1:, 0], f.md[1:, 0])) * 1e8
+        np.set_printoptions(formatter=cast(Any, {'float': '{:7.1f}'.format}), linewidth=120)
+        print(f)
+
+        A = ion.radiative_rates(judd_ofelt, material)
+        A = np.column_stack((A.ed[-2::-1, -1], A.md[-2::-1, -1]))
+        np.set_printoptions(formatter=cast(Any, {'float': '{:7.0f}'.format}), linewidth=120)
+        print(A)
+        #print(A.md)

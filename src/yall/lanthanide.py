@@ -9,7 +9,7 @@ import numpy as np
 
 from .ameli import update
 from .matrix import get_matrix, get_energies, get_reduced
-from .spectrum import Reduced, CONST_gs, line_strengths
+from .spectrum import Reduced, CONST_gs, line_strengths, Cauchy, Sellmeier, oscillator_strengths, radiative_rates
 from .state import Coupling, init_states, StateListJ, StateListM
 
 logger = logging.getLogger("yall.lanthanide")
@@ -124,6 +124,12 @@ JUDD_OFELT = {
         {"JO/2": 2.920, "JO/4": 1.856, "JO/6": 0.670},
 }
 
+# Spectral refractive index coefficients
+MATERIAL = {
+    "Pb:ZBLAN": Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6),
+    "ZBLAN": Cauchy(1.35123e-5, 2.94780e-3, 1.48965, -1.30933e-3, -3.23335e-6),
+    "SiO2": Sellmeier(0.6961663, 0.4079426, 0.8974794, 0.0684043, 0.1162414, 9.896161)
+}
 
 class Lanthanide:
     """ Lanthanide ion with given number of 4f electrons. It provides all energy levels and states in intermediate
@@ -245,8 +251,8 @@ class Lanthanide:
                 LS=np.power(self.reduced([(1.0, "L"), (CONST_gs, "S")], Coupling.Intermediate), 2))
         return self._reduced_
 
-    def line_strengths(self, judd_ofelt: dict):
-        """ Calculate and return matrices containing the line strengths of all electric and magnetic dipole
+    def line_strengths(self, judd_ofelt):
+        """ Calculate and return matrices containing the line strengths in Jm^3 of all electric and magnetic dipole
         transitions. Rows refer to final and columns to initial states. """
 
         # Multiply each matrix column with factor with J of the initial state
@@ -254,6 +260,26 @@ class Lanthanide:
         states = self.states(Coupling.Intermediate)
         J = list(map(float, states.J))
         return line_strengths(judd_ofelt, reduced, J)
+
+    def oscillator_strengths(self, judd_ofelt, material):
+        """ Calculate and return matrices containing the dimensionless oscillator strengths of all electric and
+        magnetic dipole transitions. Rows refer to final and columns to initial states. """
+
+        # Multiply each matrix column with factor with J of the initial state
+        reduced = self.line_reduced()
+        states = self.states(Coupling.Intermediate)
+        J = list(map(float, states.J))
+        return oscillator_strengths(judd_ofelt, reduced, J, self.energies, material)
+
+    def radiative_rates(self, judd_ofelt, material):
+        """ Calculate and return matrices containing the radiative emission rates in 1/s of all electric and magnetic
+        dipole transitions. Rows refer to final and columns to initial states. """
+
+        # Multiply each matrix column with factor with J of the initial state
+        reduced = self.line_reduced()
+        states = self.states(Coupling.Intermediate)
+        J = list(map(float, states.J))
+        return radiative_rates(judd_ofelt, reduced, J, self.energies, material)
 
     def str_levels(self, min_weight=0.0):
         """ Return a list containing an extensive description string for each state with energy and composition with
