@@ -20,10 +20,13 @@
 from pathlib import Path
 
 import h5py
+import logging
 import numpy as np
 
 from .ameli import MATRIX_PATH, get_ameli_matrix
 from .state import Coupling
+
+logger = logging.getLogger("yall.matrix")
 
 
 def normalise_radial(radial):

@@ -14,9 +14,12 @@
 ##########################################################################
 
 from enum import Enum
+import logging
 import numpy as np
 
 from .ameli import read_transform
+
+logger = logging.getLogger("yall.state")
 
 SPECTRAL = "spdfghiklmnoqrtuvwxyz"
 
@@ -430,7 +433,7 @@ def init_states(config_name):
 
     indices = SLJM_states.stretched()
     assert chain[-1] == "Jz"
-    values = values[indices,:-1]
+    values = values[indices, :-1]
     chain = chain[:-1]
     del reprs["Jz"]
     transform = transform[:, indices]

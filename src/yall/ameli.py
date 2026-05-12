@@ -12,6 +12,7 @@ import json
 from datetime import datetime, timedelta
 from functools import total_ordering
 import io
+import logging
 import math
 from pathlib import Path
 import requests
@@ -20,6 +21,8 @@ import zipfile
 
 import numpy as np
 import h5py
+
+logger = logging.getLogger("yall.ameli")
 
 AMELI_PATH = Path(__file__).resolve().parent / "ameli"
 MATRIX_PATH = Path(__file__).resolve().parent / "matrix"
@@ -114,7 +117,7 @@ def get_zenodo_version(concept_id):
         response = requests.get(url)
         response.raise_for_status()
     except Exception as e:
-        print(f"Warning: Access to record {concept_id} failed: {e}")
+        logger.warning(f"Warning: Access to record {concept_id} failed ({e})")
         return None
 
     data = response.json()
@@ -156,7 +159,9 @@ def download_files(concept_id, filenames, config_path):
             # Metadata of this file
             file_data = next((f for f in files_in_record if f['key'] == filename), None)
             if not file_data:
-                raise Exception(f"File '{filename}' not found in Zenodo record {concept_id}.")
+                message = f"Error: File '{filename}' not found in Zenodo record {concept_id}"
+                logger.error(message)
+                raise Exception(message)
 
             # Download the file as stream to stay memory-efficient for large files
             local_tmp_file = tmp_path / filename
@@ -181,7 +186,7 @@ def download_files(concept_id, filenames, config_path):
 
     # Update the VERSION file
     update_version(version, config_path)
-    print(f"Local copy of Zenodo record {concept_id} updated to {version}")
+    logger.debug(f"Zenodo record {concept_id} updated to {version} in {config_path}")
 
 
 def update_version(version, path):
@@ -191,6 +196,7 @@ def update_version(version, path):
     timestamp = datetime.now().isoformat(timespec='seconds')
     content = f"{version}: {timestamp}"
     version_file.write_text(content, encoding="utf-8")
+    logger.debug(f"Zenodo version {version} timestamp updated in {path}")
 
 
 def remove_vault(config):
@@ -199,22 +205,27 @@ def remove_vault(config):
         for file in path.iterdir():
             file.unlink()
         path.rmdir()
-
+    logger.debug(f"Local matrix vault for configuration {config} removed")
 
 def update(config, force=False):
+    logger.debug(f"Updating configuration {config} with force={force}")
+
     path = AMELI_PATH / config
     if not path.exists():
         path.mkdir(parents=True)
 
     local_version, timestamp = get_local_version(path)
-    # print(f"Local version of configuration f{num_electrons}: {local_version} from {timestamp}")
+    if local_version is None:
+        logger.debug(f"Found no local version of configuration {config}")
+    else:
+        logger.debug(f"Found local version {local_version} of configuration {config} ({timestamp})")
     if local_version is not None and datetime.now() - timestamp < timedelta(hours=ZENODO_REFRESH) and not force:
-        # print("Local version is fresh.")
+        logger.debug(f"Local version {local_version} is fresh")
         return
 
     concept_id = RECORDS[config]
     zenodo_version = get_zenodo_version(concept_id)
-    # print(f"Zenodo record {concept_id} has version {zenodo_version}")
+    logger.debug(f"Zenodo record {concept_id} has version {zenodo_version}")
 
     if zenodo_version is None:
         assert local_version is not None, f"Cannot download data from Zenodo record {concept_id}!"

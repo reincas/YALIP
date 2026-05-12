@@ -6,11 +6,14 @@
 
 from pathlib import Path
 from dataclasses import dataclass
+import logging
 import numpy as np
 import h5py
 
 from .matrix import normalise_radial, build_hamilton, get_matrix
 from .state import Coupling, init_states
+
+logger = logging.getLogger("yall.lanthanide")
 
 # Symbols of the 15 Lanthanides. The configurations of the triply ionized atoms are 4f0 - 4f14
 LANTHANIDES = ["La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
