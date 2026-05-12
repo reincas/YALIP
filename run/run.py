@@ -1,11 +1,14 @@
+##########################################################################
+# Copyright (c) 2026 Reinhard Caspary                                    #
+# <reinhard.caspary@phoenixd.uni-hannover.de>                            #
+# This program is free software under the terms of the MIT license.      #
+##########################################################################
+
 import logging
-
 import numpy as np
-from scidatacontainer import Container
+from typing import cast, Any
 
-from yall import Lanthanide
-from yall.state import Coupling, init_states
-from yall.ameli import update, AMELI_PATH
+from yall import Lanthanide, Coupling
 
 logger = logging.getLogger("run")
 
@@ -35,10 +38,19 @@ if __name__ == "__main__":
 
     num = 2
     config = f"f{num}"
-    update(config)
-    coupling = Coupling.SLJM
+    coupling = Coupling.SLJ
 
     with Lanthanide(num, coupling, radial) as ion:
         print(ion)
         for state in ion.str_levels(min_weight=0.05):
             print(state)
+
+        reduced = ion.line_reduced()
+        R = np.column_stack((reduced.U2[1:, 0], reduced.U4[1:, 0], reduced.U6[1:, 0], reduced.LS[1:, 0]))
+        np.set_printoptions(formatter=cast(Any, {'float': '{:7.4f}'.format}), linewidth=120)
+        print(R)
+
+        judd_ofelt = {"JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
+        strength = ion.line_strengths(judd_ofelt)
+        print(strength.Sed[1:, 0])
+        print(strength.Smd[1:, 0])

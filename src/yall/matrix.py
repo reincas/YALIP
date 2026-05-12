@@ -161,9 +161,7 @@ def get_energies(config:str, radial: dict, states: StateList):
 
 
 def get_matrix(name, config, coupling):
-    """ Return a Matrix object of the matrix of the tensor operator with given name and in the given coupling
-    scheme (default: Coupling.Product). The matrices of the tensor operators in the list STORE are stored in the
-    HDF5 file cache in SLJM and SLJ coupling. """
+    """ Return the matrix of the tensor operator, or the weighted sum of tensor operators in the coupling scheme. """
 
     assert isinstance(coupling, Coupling)
     assert coupling in (Coupling.Product, Coupling.SLJM, Coupling.SLJ)
@@ -181,10 +179,38 @@ def get_matrix(name, config, coupling):
     if name in ALT_NAMES:
         return get_matrix(ALT_NAMES[name], config, coupling)
 
-    vault = path / f"{coupling.name.lower()}.hdf5"
+    state_space = coupling.name.lower()
+    vault = path / f"{state_space}.hdf5"
     with h5py.File(vault, "a") as fp:
         if name not in fp.keys():
-            matrix = get_ameli_matrix(name, config, coupling)
+            matrix = get_ameli_matrix(name, config, state_space)
+            fp.create_dataset(name, data=matrix)
+        else:
+            matrix = np.array(fp[name])
+    return matrix
+
+
+def get_reduced(name, config):
+    """ Return the matrix of reduced elements of the given tensor operator, or the weighted sum of tensor operators. """
+
+    state_space = "slj_reduced"
+    path = MATRIX_PATH / state_space
+    if not path.exists():
+        path.mkdir(parents=True)
+
+    if isinstance(name, list):
+        matrix = 0.0
+        for sub_weight, sub_name in name:
+            matrix += sub_weight * get_reduced(sub_name, config)
+        return matrix
+
+    if name in ALT_NAMES:
+        return get_reduced(ALT_NAMES[name], config)
+
+    vault = path / f"{state_space}.hdf5"
+    with h5py.File(vault, "a") as fp:
+        if name not in fp.keys():
+            matrix = get_ameli_matrix(name, config, state_space)
             fp.create_dataset(name, data=matrix)
         else:
             matrix = np.array(fp[name])

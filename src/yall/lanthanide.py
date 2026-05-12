@@ -1,5 +1,5 @@
 ##########################################################################
-# Copyright (c) 2025 Reinhard Caspary                                    #
+# Copyright (c) 2026 Reinhard Caspary                                    #
 # <reinhard.caspary@phoenixd.uni-hannover.de>                            #
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
@@ -9,7 +9,7 @@ import logging
 import numpy as np
 
 from .ameli import update
-from .matrix import get_matrix, get_energies
+from .matrix import get_matrix, get_energies, get_reduced
 from .state import Coupling, init_states, StateListJ, StateListM
 
 logger = logging.getLogger("yall.lanthanide")
@@ -23,6 +23,7 @@ CONST_eps0 = 8.8542e-12  # C / V m
 CONST_me = 9.1095e-31  # kg
 CONST_h = 6.6262e-34  # J s
 CONST_c = 2.99792458e8  # m / s
+CONST_gs = 2.00231924
 
 ##########################################################################
 #
@@ -166,7 +167,7 @@ class Lanthanide:
 
         assert isinstance(num, int)
         assert 0 < num < 14
-        assert self.coupling in (Coupling.SLJ, Coupling.SLJM), str(self.coupling)
+        assert self.coupling in (Coupling.SLJ, Coupling.SLJM), f"Coupling {self.coupling} is not supported."
 
         # Number of electrons, name and electron configuration of the lanthanide ion
         self.num = num
@@ -207,11 +208,16 @@ class Lanthanide:
         coupling = coupling or self.coupling
         return get_matrix(name, self.config, coupling)
 
-    # def reduced(self, name, coupling=None):
-    #     """ Return array of reduced matrix elements of the given operator in the given coupling scheme
-    #     (default: J). The name of the operator must contain "{q}" if its rank is not zero. """
-    #
-    #     return reduced_matrix(self, name, coupling)
+    def reduced(self, name, coupling):
+        """ Return array of reduced matrix elements of the given operator in the coupling scheme SLJ or
+        intermediate. """
+
+        assert coupling in (Coupling.SLJ, Coupling.Intermediate)
+        matrix = get_reduced(name, self.config)
+        if coupling == Coupling.Intermediate:
+            V = self.states(coupling).transform
+            matrix = V.T @ matrix @ V
+        return matrix
 
     def states(self, coupling=None):
         """ Return StateList object of the given coupling scheme or the one selected when the Lanthanide object
@@ -260,10 +266,10 @@ class Lanthanide:
 
         if not self._reduced_:
             self._reduced_ = Reduced(
-                U2=np.power(self.reduced("ED/2,{q}"), 2),
-                U4=np.power(self.reduced("ED/4,{q}"), 2),
-                U6=np.power(self.reduced("ED/6,{q}"), 2),
-                LS=np.power(self.reduced("MD/{q}"), 2))
+                U2=np.power(self.reduced("U/2", Coupling.Intermediate), 2),
+                U4=np.power(self.reduced("U/4", Coupling.Intermediate), 2),
+                U6=np.power(self.reduced("U/6", Coupling.Intermediate), 2),
+                LS=np.power(self.reduced([(1.0, "L"), (CONST_gs, "S")], Coupling.Intermediate), 2))
         return self._reduced_
 
     def line_strengths(self, judd_ofelt: dict):
@@ -272,7 +278,8 @@ class Lanthanide:
 
         # Multiply each matrix column with factor with J of the initial state
         reduced = self.line_reduced()
-        invJi = np.array([1 / (3 * (2 * j + 1)) for j in self.intermediate.J])
+        states = self.states(Coupling.Intermediate)
+        invJi = np.array([1 / (3 * (2 * float(j) + 1)) for j in states.J])
 
         result_ed = (judd_ofelt["JO/2"] * reduced.U2 +
                      judd_ofelt["JO/4"] * reduced.U4 +

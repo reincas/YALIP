@@ -360,9 +360,8 @@ def read_matrix(path, item):
     return matrix
 
 
-def get_ameli_matrix(name, config, coupling):
-    state_space = coupling.name.lower()
-    assert state_space in ("slj", "sljm", "product")
+def get_ameli_matrix(name, config, state_space):
+    assert state_space in ("slj_reduced", "slj", "sljm", "product")
     path = matrix_path(config, state_space, name)
     return read_matrix(path, "data/matrix.hdf5")
 
