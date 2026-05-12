@@ -61,14 +61,10 @@ mathematically operating inside the 4f configuration.
 
 ## Installation
 
-**Note**: _This package is work-in-progress now.
-Everything is available but has not settled to its final shape yet.
-Expect interfaces to be changed._
-
-To build and install the package, download the files from GitHub and run the command
+The package is available on PyPI and the installation therefore is possible using pip
 
 ```
-python -m pip install .
+python -m pip install yall
 ```
 
 ## Lanthanide class
