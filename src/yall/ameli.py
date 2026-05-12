@@ -21,25 +21,27 @@ import zipfile
 import numpy as np
 import h5py
 
+AMELI_PATH = Path(__file__).resolve().parent / "ameli"
+MATRIX_PATH = Path(__file__).resolve().parent / "matrix"
+
 ZENODO_API = "https://zenodo.org/api"
 ZENODO_RECORD = f"{ZENODO_API}/records"
 ZENODO_REFRESH = 12  # hours
 RECORDS = {
-    1: 19130697,
-    2: 19139480,
-    3: 19144764,
-    4: 19154321,
-    5: 19154326,
-    6: 19158643,
-    7: 19158647,
-    8: 19158658,
-    9: 19158660,
-    10: 19158667,
-    11: 19158671,
-    12: 19158675,
-    13: 19158677,
+    "f1": 19130697,
+    "f2": 19139480,
+    "f3": 19144764,
+    "f4": 19154321,
+    "f5": 19154326,
+    "f6": 19158643,
+    "f7": 19158647,
+    "f8": 19158658,
+    "f9": 19158660,
+    "f10": 19158667,
+    "f11": 19158671,
+    "f12": 19158675,
+    "f13": 19158677,
 }
-AMELI_PATH = Path(__file__).resolve().parent / "ameli"
 
 
 ##########################################################################
@@ -191,18 +193,26 @@ def update_version(version, path):
     version_file.write_text(content, encoding="utf-8")
 
 
-def update(num_electrons):
-    config_path = AMELI_PATH / f"f{num_electrons}"
-    if not config_path.exists():
-        config_path.mkdir(parents=True)
+def remove_vault(config):
+    path = MATRIX_PATH / config
+    if path.exists():
+        for file in path.iterdir():
+            file.unlink()
+        path.rmdir()
 
-    local_version, timestamp = get_local_version(config_path)
+
+def update(config, force=False):
+    path = AMELI_PATH / config
+    if not path.exists():
+        path.mkdir(parents=True)
+
+    local_version, timestamp = get_local_version(path)
     # print(f"Local version of configuration f{num_electrons}: {local_version} from {timestamp}")
-    if local_version is not None and datetime.now() - timestamp < timedelta(hours=ZENODO_REFRESH):
+    if local_version is not None and datetime.now() - timestamp < timedelta(hours=ZENODO_REFRESH) and not force:
         # print("Local version is fresh.")
         return
 
-    concept_id = RECORDS[num_electrons]
+    concept_id = RECORDS[config]
     zenodo_version = get_zenodo_version(concept_id)
     # print(f"Zenodo record {concept_id} has version {zenodo_version}")
 
@@ -212,9 +222,10 @@ def update(num_electrons):
 
     if local_version is None or local_version < zenodo_version:
         filenames = ("product.zip", "sljm.zip", "slj.zip")
-        download_files(concept_id, filenames, config_path)
+        download_files(concept_id, filenames, path)
+        remove_vault(config)
     else:
-        update_version(local_version, config_path)
+        update_version(local_version, path)
 
 
 ##########################################################################

@@ -8,7 +8,8 @@ if __name__ == "__main__":
         "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67 }
 
     num = 2
-    update(num)
+    config = f"f{num}"
+    update(config)
     coupling = Coupling.SLJ
     name = "H1/2"
 
@@ -22,9 +23,7 @@ if __name__ == "__main__":
     # #print(matrix_old)
     # #print(matrix_new)
 
-    config = f"f{num}"
     dc = Container(file=str(AMELI_PATH / config / "transform.zdc"))
 
-    #t = read_transform(num)
-    config = f"f{num}"
+    #t = read_transform(config)
     s = init_states(config)

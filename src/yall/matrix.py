@@ -22,10 +22,8 @@ from pathlib import Path
 import h5py
 import numpy as np
 
-from .ameli import get_ameli_matrix
+from .ameli import MATRIX_PATH, get_ameli_matrix
 from .state import Coupling
-
-MATRIX_PATH = Path(__file__).resolve().parent / "matrix"
 
 
 def normalise_radial(radial):
