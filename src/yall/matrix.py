@@ -194,7 +194,7 @@ def get_reduced(name, config):
     """ Return the matrix of reduced elements of the given tensor operator, or the weighted sum of tensor operators. """
 
     state_space = "slj_reduced"
-    path = MATRIX_PATH / state_space
+    path = MATRIX_PATH / config
     if not path.exists():
         path.mkdir(parents=True)
 
