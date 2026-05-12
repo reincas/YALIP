@@ -29,7 +29,7 @@ MATRIX_PATH = Path(__file__).resolve().parent / "matrix"
 
 ZENODO_API = "https://zenodo.org/api"
 ZENODO_RECORD = f"{ZENODO_API}/records"
-ZENODO_REFRESH = 12  # hours
+ZENODO_REFRESH_HOURS = 12
 RECORDS = {
     "f1": 19130697,
     "f2": 19139480,
@@ -219,7 +219,7 @@ def update(config, force=False):
         logger.debug(f"Found no local version of configuration {config}")
     else:
         logger.debug(f"Found local version {local_version} of configuration {config} ({timestamp})")
-    if local_version is not None and datetime.now() - timestamp < timedelta(hours=ZENODO_REFRESH) and not force:
+    if local_version is not None and datetime.now() - timestamp < timedelta(hours=ZENODO_REFRESH_HOURS) and not force:
         logger.debug(f"Local version {local_version} is fresh")
         return
 
