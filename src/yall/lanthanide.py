@@ -4,26 +4,18 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 
-from dataclasses import dataclass
 import logging
 import numpy as np
 
 from .ameli import update
 from .matrix import get_matrix, get_energies, get_reduced
+from .spectrum import Reduced, CONST_gs, line_strengths
 from .state import Coupling, init_states, StateListJ, StateListM
 
 logger = logging.getLogger("yall.lanthanide")
 
 # Symbols of the 15 Lanthanides. The configurations of the triply ionized atoms are 4f0 - 4f14
 LANTHANIDES = ["La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
-
-# Physical constants
-CONST_e = 1.6022e-19  # C
-CONST_eps0 = 8.8542e-12  # C / V m
-CONST_me = 9.1095e-31  # kg
-CONST_h = 6.6262e-34  # J s
-CONST_c = 2.99792458e8  # m / s
-CONST_gs = 2.00231924
 
 ##########################################################################
 #
@@ -131,25 +123,6 @@ JUDD_OFELT = {
     "Tm3+/ZBLAN":  # from [RC]
         {"JO/2": 2.920, "JO/4": 1.856, "JO/6": 0.670},
 }
-
-
-@dataclass
-class Reduced:
-    """ Dataclass containing the reduced matrix elements required for the calculation of the line strength
-    of electric and magnetic dipole transitions. """
-
-    U2: np.ndarray
-    U4: np.ndarray
-    U6: np.ndarray
-    LS: np.ndarray
-
-
-@dataclass
-class LineStrength:
-    """ Dataclass containing the matrices of the line strengths of electric and magnetic dipole transitions. """
-
-    Sed: np.ndarray
-    Smd: np.ndarray
 
 
 class Lanthanide:
@@ -279,21 +252,8 @@ class Lanthanide:
         # Multiply each matrix column with factor with J of the initial state
         reduced = self.line_reduced()
         states = self.states(Coupling.Intermediate)
-        invJi = np.array([1 / (3 * (2 * float(j) + 1)) for j in states.J])
-
-        result_ed = (judd_ofelt["JO/2"] * reduced.U2 +
-                     judd_ofelt["JO/4"] * reduced.U4 +
-                     judd_ofelt["JO/6"] * reduced.U6) * invJi
-        result_md = reduced.LS * invJi
-
-        # Remove diagonal elements
-        np.fill_diagonal(result_ed, 0.0)
-        np.fill_diagonal(result_md, 0.0)
-
-        # Apply scaling factors
-        result_ed *= CONST_e ** 2 / (4 * np.pi * CONST_eps0) * 1e-24
-        result_md *= 1 / (4 * np.pi * CONST_eps0) * (CONST_e * CONST_h / (2 * np.pi * 2 * CONST_me * CONST_c)) ** 2
-        return LineStrength(Sed=result_ed, Smd=result_md)
+        J = list(map(float, states.J))
+        return line_strengths(judd_ofelt, reduced, J)
 
     def str_levels(self, min_weight=0.0):
         """ Return a list containing an extensive description string for each state with energy and composition with

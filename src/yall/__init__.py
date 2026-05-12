@@ -5,4 +5,5 @@
 ##########################################################################
 
 from .state import Coupling
-from .lanthanide import LANTHANIDES, RADIAL, JUDD_OFELT, Lanthanide, CONST_e, CONST_eps0, CONST_me, CONST_h, CONST_c
+from .lanthanide import LANTHANIDES, RADIAL, JUDD_OFELT, Lanthanide
+from .spectrum import CONST_e, CONST_eps0, CONST_me, CONST_h, CONST_c, CONST_gs
