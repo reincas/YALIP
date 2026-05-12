@@ -17,7 +17,6 @@
 # operations to build for linear combinations of these matrices.
 #
 ##########################################################################
-from pathlib import Path
 
 import h5py
 import logging

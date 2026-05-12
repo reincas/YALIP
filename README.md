@@ -1,15 +1,17 @@
 # YALL 0.1.0 (Yet Another Lanthanide Library)
 
-This is a Python 3 package to calculate the energy levels of multi-electron systems
-populating the 4f configuration, which means the lanthanide or rare-earth ions from
-Ce<sup>3+</sup> (4f<sup>1</sup>) to Yb<sup>3+</sup> (4f<sup>13</sup>). The
-calculation is based on Racahs single electron unit tensor operators as developed
-in my PhD thesis [1]. You find a copy of the [thesis](docs/Dissertation.pdf) and
-[corrections](docs/errata5.pdf) in the folder `docs` and the original version of the software in
-the repository [Lanthanide-0.3](https://github.com/reincas/Lanthanide-0.3).
+This is a Python 3 package to calculate the energy levels of multi-electron systems populating the 4f configuration,
+which means the lanthanide or rare-earth ions from Ce<sup>3+</sup> (4f<sup>1</sup>) to Yb<sup>3+</sup>
+(4f<sup>13</sup>).
+The calculation is based on Racahs tensor algebra using an approach introduced in my PhD thesis [1].
+You find a copy of the [thesis](docs/Dissertation.pdf) and [corrections](docs/errata5.pdf) in the folder `docs`.
+The original version of the software is available in the GitHub repository [Lanthanide-0.3](https://github.com/reincas/Lanthanide-0.3) and the last
+implementation of the original approach in the repository [Lanthanide](https://github.com/reincas/Lanthanide).
+However, the YALL package is using the matrix elements from the Zenodo repository
+[AMELI](https://zenodo.org/communities/ameli) calculated and stored exact arithmetic [2].
 
-The matrix elements are calculated in the space of determinantal product
-states and then transformed to the SLJM space using the chain of operators:
+The matrix elements have been calculated in the space of determinantal product states and then transformed to the SLJM
+space using the chain of operators:
 
 $$ \mathbf{S}^2 \to \mathbf{G}(R_7) \to \mathbf{G}(G_2)
 \to \mathbf{L}^2 \to \mathbf{J}^2 \to \mathrm{J}_z $$
@@ -321,3 +323,5 @@ This is free software under the MIT License.
 
 [1] Reinhard Caspary: "Applied Rare-Earth Spectroscopy for Fiber Laser Optimization", doctoral dissertation at
 Technische Universität Braunschweig, published with Shaker, Aachen, 2002
+[2] Reinhard Caspary: "AMELI: Angular Matrix Elements of Lanthanide Ions", arXiv, 2026,
+https://doi.org/10.48550/arXiv.2603.21947

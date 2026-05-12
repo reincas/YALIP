@@ -37,7 +37,8 @@ if __name__ == "__main__":
     coupling = Coupling.SLJ
     name = "H1/2"
 
-    with Lanthanide(num, Coupling.SLJ, radial) as ion:
+    with Lanthanide(num, coupling, radial) as ion:
+        print(ion)
         matrix = ion.matrix(name)
         for state in ion.str_levels():
             print(state)
