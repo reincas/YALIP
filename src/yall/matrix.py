@@ -41,6 +41,8 @@ ALT_NAMES = {
     "H3/0": "LL",
     "H3/1": "C2",
     "H3/2": "CR",
+    "H5fix": [(1.0, "H5/0"), (0.56, "H5/2"), (0.38, "H5/4")],
+    "H6fix": [(1.0, "H6/2"), (0.75, "H6/4"), (0.50, "H6/6")],
 }
 
 
@@ -124,21 +126,15 @@ def normalise_radial(radial):
     return new_radial
 
 
-def build_hamilton(ion, radial: dict, coupling=None):
+def build_hamilton(config, radial: dict, coupling: Coupling):
     """ Build and return the matrix of a perturbation hamiltonian operator as linear combination of the interaction
     hamiltonians and factors specified in the dictionary radial in the given coupling scheme."""
 
-    assert coupling is None or coupling in (Coupling.SLJM, Coupling.SLJ)
+    assert coupling in (Coupling.SLJM, Coupling.SLJ)
     assert isinstance(radial, dict)
 
-    # Default is coupling of yall ion
-    coupling = coupling or ion.coupling
-
-    # Initialize empty hamiltonian matrix
-    num_states = len(ion.states(coupling))
-    matrix = np.zeros((num_states, num_states), dtype=float)
-
     # Build linear combination specified in the radial dictionary
+    matrix = 0.0
     for name in radial:
         if name == "base":
             continue
@@ -146,7 +142,7 @@ def build_hamilton(ion, radial: dict, coupling=None):
             continue
         if name[:3] == "Hcf" and coupling != Coupling.SLJM:
             raise ValueError("Crystal field interaction requires SLJM coupling!")
-        matrix = matrix + radial[name] * get_matrix(ion, name, coupling).array
+        matrix += radial[name] * get_matrix(name, config, coupling)
 
     # Return the total hamiltonian as Matrix object in the given coupling scheme
     return matrix
@@ -164,8 +160,14 @@ def get_matrix(name, config, coupling):
     if not path.exists():
         path.mkdir(parents=True)
 
+    if isinstance(name, list):
+        matrix = 0.0
+        for sub_weight, sub_name in name:
+            matrix += sub_weight * get_matrix(sub_name, config, coupling)
+        return matrix
+
     if name in ALT_NAMES:
-        name = ALT_NAMES[name]
+        return get_matrix(ALT_NAMES[name], config, coupling)
 
     vault = path / f"{coupling.name.lower()}.hdf5"
     with h5py.File(vault, "a") as fp:

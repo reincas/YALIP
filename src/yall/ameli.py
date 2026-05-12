@@ -21,6 +21,7 @@ import zipfile
 
 import numpy as np
 import h5py
+from requests import Timeout
 
 logger = logging.getLogger("yall.ameli")
 
@@ -114,8 +115,11 @@ def get_zenodo_version(concept_id):
 
     # Try to read Zenodo record, but ignore it if it not accessible yet
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=3)
         response.raise_for_status()
+    except Timeout:
+        logger.info(f"Zenodo timeout on record {concept_id}")
+        return None
     except Exception as e:
         logger.warning(f"Warning: Access to record {concept_id} failed ({e})")
         return None

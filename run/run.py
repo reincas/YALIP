@@ -1,6 +1,7 @@
 import logging
 from scidatacontainer import Container
 
+from yall import Lanthanide
 from yall.state import Coupling, init_states
 from yall.ameli import update, AMELI_PATH
 
@@ -36,6 +37,11 @@ if __name__ == "__main__":
     coupling = Coupling.SLJ
     name = "H1/2"
 
+    with Lanthanide(num, Coupling.SLJ, radial) as ion:
+        matrix = ion.matrix(name)
+        for state in ion.str_levels():
+            print(state)
+
     # with Lanthanide(num, coupling, radial) as ion:
     #     matrix_old = ion.matrix(name, coupling).array
     # matrix_new = read_f_matrix(num, coupling, name)
@@ -46,7 +52,7 @@ if __name__ == "__main__":
     # #print(matrix_old)
     # #print(matrix_new)
 
-    dc = Container(file=str(AMELI_PATH / config / "transform.zdc"))
+    #dc = Container(file=str(AMELI_PATH / config / "transform.zdc"))
 
     # t = read_transform(config)
-    s = init_states(config)
+    #s = init_states(config)

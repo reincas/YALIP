@@ -4,14 +4,13 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 
-from pathlib import Path
 from dataclasses import dataclass
 import logging
 import numpy as np
-import h5py
 
+from .ameli import update
 from .matrix import normalise_radial, build_hamilton, get_matrix
-from .state import Coupling, init_states
+from .state import Coupling, init_states, StateListJ, StateListM
 
 logger = logging.getLogger("yall.lanthanide")
 
@@ -162,28 +161,31 @@ class Lanthanide:
         radial integrals (default: Carnalls integrals for LaF3). The given coupling scheme may be SLJM or
         SLJ (default). """
 
+        # Coupling scheme for the states. Default is SLJ.
+        self.coupling = coupling or Coupling.SLJ
+
         assert isinstance(num, int)
         assert 0 < num < 14
-        assert coupling is None or coupling in (Coupling.SLJ, Coupling.SLJM)
+        assert self.coupling in (Coupling.SLJ, Coupling.SLJM), str(self.coupling)
 
         # Number of electrons, name and electron configuration of the lanthanide ion
         self.num = num
         self.name = f"{LANTHANIDES[num]}3+"
         self.config = f"f{num}"
 
-        # Coupling scheme for the states. Default is SLJ.
-        self.coupling = coupling or Coupling.SLJ
+        # Update matrix data from the Zenodo repository
+        update(self.config)
 
         # Initialize the electron states for SLJM and SLJ coupling
-        self._state_dict_ = init_states(self)
+        self.state_dict = init_states(self.config)
 
         # Calculate energy levels and states in intermediate coupling based on the given radial integrals
-        self._reduced_ = None
         self.radial = None
         self.hamilton = None
         self.energies = None
-        self.intermediate = None
         self.set_radial(radial or RADIAL[self.name])
+
+        self._reduced_ = None
 
     def __enter__(self):
         """ Entry hook of the content management protocol. """
@@ -191,41 +193,39 @@ class Lanthanide:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """ Exit hook of the content management protocol. Close the cache file. """
+        """ Exit hook of the content management protocol. """
 
         self.close()
         return False
 
     def close(self):
-        """ Clear the matrix memory cache and close the cache file. """
 
-        get_matrix.cache_clear()
-        self.vault.close()
+        pass
 
     def matrix(self, name, coupling=None):
         """ Return Matrix object of the given operator in the given coupling scheme (default: Product). """
 
-        return get_matrix(self, name, coupling)
+        coupling = coupling or self.coupling
+        return get_matrix(name, self.config, coupling)
 
-    def reduced(self, name, coupling=None):
-        """ Return array of reduced matrix elements of the given operator in the given coupling scheme
-        (default: J). The name of the operator must contain "{q}" if its rank is not zero. """
-
-        return reduced_matrix(self, name, coupling)
+    # def reduced(self, name, coupling=None):
+    #     """ Return array of reduced matrix elements of the given operator in the given coupling scheme
+    #     (default: J). The name of the operator must contain "{q}" if its rank is not zero. """
+    #
+    #     return reduced_matrix(self, name, coupling)
 
     def states(self, coupling=None):
         """ Return StateList object of the given coupling scheme or the one selected when the Lanthanide object
         was initialized. """
 
         coupling = coupling or self.coupling
-        return self._state_dict_[coupling.name]
+        return self.state_dict[coupling.name]
 
     def num_states(self, coupling=None):
         """ Return number of states in the given coupling scheme or the one selected when the Lanthanide object
         was initialized. """
 
-        coupling = coupling or self.coupling
-        return len(self._state_dict_[coupling.name])
+        return len(self.states(coupling))
 
     def set_radial(self, radial):
         """ Normalise and store new dictionary of radial integrals and use them to calculate all energy levels and
@@ -239,27 +239,21 @@ class Lanthanide:
 
         # Store radial integrals and use them to build the full perturbation hamiltonian
         self.radial = normalise_radial(radial)
-        self.hamilton = build_hamilton(self, self.radial, self.coupling)
+        self.hamilton = build_hamilton(self.config, self.radial, self.coupling)
 
-        # Diagonalise the hamiltonian matrix and get energies and intermediate coupling vectors. The crystal field
-        # hamiltonians require SLJM coupling and release the J degeneracy. Full diagonalisation is thus required then.
-        if self.coupling == Coupling.SLJ:
-            self.energies, transform = self.hamilton.fast_diagonalise()
-        else:
-            self.energies, transform = self.hamilton.diagonalise()
+        # Diagonalise the Hamiltonian and get energies and intermediate coupling vectors
+        self.energies, transform = np.linalg.eigh(self.hamilton)
 
         # Adjust the energy level of the ground state
         if "base" in self.radial:
-            self.energies -= self.energies[0]
-            self.energies += self.radial["base"]
+            self.energies += self.radial["base"] - self.energies[0]
 
         # Build and store the StateListJ object of the electron states in intermediate coupling
+        key = Coupling.Intermediate.name
         if self.coupling == Coupling.SLJ:
-            self.intermediate = self.states().to_J(self.energies, transform)
-            self._state_dict_[Coupling.J.name] = self.intermediate
+            self.state_dict[key] = StateListJ(self.state_dict["SLJ"], self.energies, transform)
         else:
-            self.intermediate = self.states().to_JM(self.energies, transform)
-            self._state_dict_[Coupling.JM.name] = self.intermediate
+            self.state_dict[key] = StateListM(self.state_dict["SLJM"], self.energies, transform)
 
         # Invalidate previously calculated reduced matrix elements
         self._reduced_ = None
@@ -303,7 +297,7 @@ class Lanthanide:
         """ Return a list containing an extensive description string for each state with energy and composition with
         weights in intermediate coupling. Only SLJ states with the given minimum weight are included. """
 
-        for state in self.intermediate:
+        for state in self.states(Coupling.Intermediate):
             yield f"  {state.energy:7.0f} | {state.long(min_weight)} >"
 
     def __str__(self):

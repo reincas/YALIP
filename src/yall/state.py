@@ -31,8 +31,7 @@ class Coupling(Enum):
     Product = 0
     SLJM = 1
     SLJ = 2
-    J = 3
-    M = 4
+    Intermediate = 3
 
 
 def norm_magnetic(value):
@@ -250,7 +249,7 @@ class StateListSLJ(StateList):
         self.repr = repr
         self.transform = transform
 
-        self.states = [StateSLJM({sym: repr[sym][state[i]] for i, sym in enumerate(chain)}) for state in values]
+        self.states = [StateSLJ({sym: repr[sym][state[i]] for i, sym in enumerate(chain)}) for state in values]
         self.J = [state.J for state in self.states]
 
 
@@ -269,7 +268,7 @@ class StateJ:
         assert isinstance(values, np.ndarray)
         assert isinstance(states, list)
         assert len(states) == len(values)
-        assert len(set(state["J2"].J for state in states)) == 1
+        assert len(set(state.J for state in states)) == 1
 
         # Energy level of the state
         self.energy = energy
@@ -287,7 +286,7 @@ class StateJ:
         self.states = [states[i] for i in indices]
 
         # Common quantum number J of the total angular momentum of all related SLJ states
-        self.J = self.states[0]["J2"].J
+        self.J = self.states[0].J
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -332,7 +331,7 @@ class StateListJ(StateList):
         self.states = []
         for i in range(len(self.slj_states)):
             # Indices of all SLJ states with the same quantum number J as the current state
-            indices = np.array(np.argwhere(self.slj_states.J == self.J[i]).flat)
+            indices = np.array(np.argwhere(np.array(self.slj_states.J) == self.J[i]).flat)
 
             # Combination vector and SLJ states for the linear combination of the current state
             values = self.transform[indices, i]
@@ -420,8 +419,8 @@ class StateListM(StateList):
 # HDF5 cache interface
 ##########################################################################
 
-def init_states(config_name):
-    data = read_transform(config_name)
+def init_states(config):
+    data = read_transform(config)
 
     Product_States = StateListProduct(data["rowStates"], data["electronPool"])
 
@@ -444,4 +443,5 @@ def init_states(config_name):
         Coupling.Product.name: Product_States,
         Coupling.SLJM.name: SLJM_states,
         Coupling.SLJ.name: SLJ_states,
+        Coupling.Intermediate.name: None,
     }
