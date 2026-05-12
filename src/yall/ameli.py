@@ -310,10 +310,19 @@ def decode_uint_array(meta, name):
 # Decode AMELI matrices
 ##########################################################################
 
-def matrix_path(config_name, state_space, name):
+def matrix_path(config, state_space, name):
     name = name.replace("/", "_").replace(",", "_")
-    path = AMELI_PATH / config_name / state_space.lower() / f"{name}.zdc"
-    assert path.exists(), f"Matrix file '{path}' does not exist!"
+    path = AMELI_PATH / config / state_space.lower() / f"{name}.zdc"
+    if not path.exists():
+        message = f"Matrix file '{path}' does not exist!"
+        try:
+            concept_id = RECORDS[config]
+            url = f"{ZENODO_RECORD}/{concept_id}"
+            message += f" Check {url}."
+        except:
+            pass
+        logger.error(message)
+        raise ValueError(message)
     return path
 
 
