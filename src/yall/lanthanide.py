@@ -9,7 +9,7 @@ import logging
 import numpy as np
 
 from .ameli import update
-from .fit import LevelFit
+from .fit import LevelFit, str_compare
 from .matrix import get_matrix, get_energies, get_reduced
 from .spectrum import Reduced, CONST_gs, line_strengths, Cauchy, Sellmeier, oscillator_strengths, radiative_rates
 from .state import Coupling, init_states, StateListJ, StateListM
@@ -132,6 +132,7 @@ MATERIAL = {
     "ZBLAN": Cauchy(1.35123e-5, 2.94780e-3, 1.48965, -1.30933e-3, -3.23335e-6),
     "SiO2": Sellmeier(0.6961663, 0.4079426, 0.8974794, 0.0684043, 0.1162414, 9.896161)
 }
+
 
 class Lanthanide:
     """ Lanthanide ion with given number of 4f electrons. It provides all energy levels and states in intermediate
@@ -309,6 +310,12 @@ class Lanthanide:
 
         for state in self.states(Coupling.Intermediate):
             yield f"  {state.energy:7.0f} | {state.long(min_weight)} >"
+
+    def str_compare_lines(self, lines):
+        if self.coupling != Coupling.SLJ:
+            raise NotImplementedError(f"Energy level comparison not yet implemented for {self.coupling} coupling!")
+
+        yield from str_compare(lines, self.states(Coupling.Intermediate))
 
     def __str__(self):
         """ Return a short string representation of this Lanthanide object. """

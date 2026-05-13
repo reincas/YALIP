@@ -65,5 +65,5 @@ if __name__ == '__main__':
             opt_params = ion.level_fit(lines, opt_names, radial)
             radial |= opt_params
 
-        for line in str_compare(lines, ion.states(Coupling.Intermediate)):
+        for line in ion.str_compare_lines(lines):
             print(line)
