@@ -224,6 +224,7 @@ class StateSLJ:
     def __init__(self, quantum):
         self.quantum = quantum
         self.J = quantum["J2"]
+        self.mult = 2 * float(self.J) + 1
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -266,6 +267,7 @@ class StateListSLJ(StateList):
 
         self.states = [StateSLJ({sym: repr[sym][state[i]] for i, sym in enumerate(chain)}) for state in values]
         self.J = [state.J for state in self.states]
+        self.mult = [2 * J + 1 for J in self.J]
 
 
 ##########################################################################
@@ -305,6 +307,7 @@ class StateJ:
 
         # Common quantum number J of the total angular momentum of all related SLJ states
         self.J = self.states[0].J
+        self.mult = 2 * float(self.J) + 1
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -347,6 +350,7 @@ class StateListJ(StateList):
 
         # J quantum number of each state in intermediate coupling is taken from its main SLJ component
         self.J = [self.slj_states.J[i] for i in np.argmax(weight, axis=0)]
+        self.mult = [2 * J + 1 for J in self.J]
 
         # Build the list of StateJ objects
         self.states = []
