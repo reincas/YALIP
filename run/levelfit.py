@@ -53,16 +53,23 @@ class LevelFit:
         self.num_states = self.matrices[next(iter(matrices.keys()))].shape[0]
 
     def get_energies(self):
-        # Compute total Hamiltonian: H = sum_i(val_i * Matrix_i)
+        """ Diagonalize the total perturbation Hamiltonian and return the energies and multiplicities of all states
+         in intermediate coupling. """
+
+        # Total perturbation Hamiltonian
         H = np.zeros((self.num_states, self.num_states), dtype=float)
         for name in self.params:
             if name != "base":
                 H += self.params[name] * self.matrices[name]
 
-        # Diagonalize and shift energies
+        # Diagonalize Hamiltonian
         energies, transform = np.linalg.eigh(H)
+
+        # Multiplicity of each energy level in intermediate coupling
         weight = np.abs(transform ** 2)
         mult = self.mult[np.argmax(weight, axis=0)]
+
+        # Return energies and multiplicities of all states
         return energies, mult
 
     def compare(self):
