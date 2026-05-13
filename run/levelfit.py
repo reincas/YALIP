@@ -13,22 +13,22 @@ from yall import Coupling, Lanthanide, RADIAL
 logger = logging.getLogger("levelfit")
 
 KMEAS = [
-    [1, '3H_5', 2364.8685161861872, 4.46507163294938],
-    [2, '3H_6', 4479.27317861957, 35.198082070458717],
-    [3, '3F_2', 5103.3423575162715, 9.2446256526771649],
-    [4, '3F_3', 6468.3053040103487, 13.304585365784103],
-    [5, '3F_4', 6958.9422407794018, 20.517575554013366],
-    [6, '1G_4', 9881.422924901186, 13.808791399350545],
-    [7, '1D_2', 17035.775127768313, 40.903961426884479],
-    [8, '3P_0', 20876.826722338206, 733.66201116333684],
-    [(9, 10), ('3P_1', '1I_6'), 21505.376344086024, 231.95236384666148],
-    [11, '3P_2', 22624.434389140268, 108.09826455155158]
+    [1, '3H_5', 2365, 4],
+    [2, '3H_6', 4485, 18],
+    [3, '3F_2', 5105, 5],
+    [4, '3F_3', 6467, 7],
+    [5, '3F_4', 6958, 10],
+    [6, '1G_4', 9883, 7],
+    [7, '1D_2', 17026, 20],
+    [8, '3P_0', 20859, 12],
+    [(9, 10), ('3P_1', '1I_6'), 21505, 20],
+    [11, '3P_2', 22645, 10]
 ]
 
 STAGE = [
     ["base", "H1/2", "H1/4", "H1/6", "H2"],
-    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2"],
-    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2", "H5fix", "H6fix"],
+    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", "H3/2"],
+    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", "H3/2", "H5fix", "H6fix"],
 ]
 
 
@@ -44,11 +44,11 @@ def format_params(params, num):
 
 
 class LevelFit:
-    def __init__(self, params, matrices, mult, data_meas):
+    def __init__(self, params, matrices, mult, lines):
         self.params = params
         self.matrices = matrices
         self.mult = mult
-        self.data_meas = data_meas
+        self.lines = lines
 
         self.num_states = self.matrices[next(iter(matrices.keys()))].shape[0]
 
@@ -71,7 +71,7 @@ class LevelFit:
 
         # Collect comparison data
         results = []
-        for idx, _, k_meas, dk_meas in data_meas:
+        for idx, _, k_meas, dk_meas in lines:
             if isinstance(idx, (list, tuple)):
                 idx = np.array(idx)
                 m = np.sum(mult[idx])
@@ -120,6 +120,56 @@ class LevelFit:
         logger.info(f"Final chi2: {self.get_chi2():.4f}")
 
 
+def str_compare(lines, states):
+    meas = len(states) * [{"type": "empty"}]
+    for idx, name, k_meas, dk_meas in lines:
+        if isinstance(idx, (list, tuple)):
+            meas[idx[0]] = {"type": "overlapped", "range": idx, "k": k_meas, "dk": dk_meas, "name": name[0]}
+            for i, n in zip(idx[1:], name[1:]):
+                meas[i] = {"type": "continue", "name": n}
+        else:
+            meas[idx] = {"type": "normal", "k": k_meas, "dk": dk_meas, "name": name}
+
+    result = []
+    for i, state in enumerate(states):
+        name_calc = state.short()
+        level_type = meas[i]["type"]
+        if level_type == "normal":
+            name_meas = meas[i]["name"]
+            k_meas = f"{meas[i]["k"]:.0f}"
+            dk_meas = f"({meas[i]["dk"]:.0f})"
+            k_calc = f"{state.energy:.0f}"
+            dk_calc = f"{state.energy - meas[i]["k"]:.1f}"
+        elif level_type == "overlapped":
+            name_meas = meas[i]["name"]
+            k_meas = f"{meas[i]["k"]:.0f}"
+            dk_meas = f"({meas[i]["dk"]:.0f})"
+            k = np.array([states[i].energy for i in meas[i]["range"]])
+            m = np.array([states[i].mult for i in meas[i]["range"]])
+            k = np.sum(k * m) / np.sum(m)
+            k_calc = f"{state.energy:.0f}"
+            dk_calc = f"{k - meas[i]["k"]:.1f}"
+        elif level_type == "continue":
+            name_meas = meas[i]["name"]
+            k_meas = "..."
+            dk_meas = ""
+            k_calc = f"{state.energy:.0f}"
+            dk_calc = "..."
+        else:
+            name_meas = ""
+            k_meas = ""
+            dk_meas = ""
+            k_calc = f"{state.energy:.0f}"
+            dk_calc = ""
+        result.append((str(i), name_meas, k_meas, dk_meas, k_calc, dk_calc, name_calc))
+
+    width = [max(map(len, values)) for values in zip(*result)]
+    fmt = "  ".join([f"{{:{width[i]}s}}" for i in range(len(width))])
+    print(fmt)
+    for values in result:
+        yield fmt.format(*values)
+
+
 def init_logger(file_name=None, level=logging.INFO):
     root = logging.getLogger()
     root.setLevel(level)
@@ -145,20 +195,25 @@ if __name__ == '__main__':
     radial = RADIAL["Pr3+"]
     # radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, "H2": 728.18,
     #     "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
-    data_meas = KMEAS
+    lines = KMEAS
 
     with Lanthanide(num, coupling, radial) as ion:
-        matrix = ion.matrix("J2", coupling)
-        J = (np.sqrt(4 * np.diag(matrix) + 1) - 1) / 2
-        mult = 2 * J + 1
+        mult = np.array(ion.states(coupling).mult)
         matrices = {name: ion.matrix(name, coupling) for name in radial.keys() if name != "base"}
+
+        print([state.short() for state in ion.states(Coupling.Intermediate)])
 
         for i, names in enumerate(STAGE):
             raw_names = [n[1:] if n.startswith(":") else n for n in names]
             assert len(set(raw_names)) == len(raw_names)
+            params = {n: ion.radial[n] for n in raw_names}
+            opt = LevelFit(params, matrices, mult, lines)
 
             opt_names = [n for n in names if n != "base" and not n.startswith(":")]
-            params = {n: radial[n] for n in raw_names}
-
-            opt = LevelFit(params, matrices, mult, data_meas)
             opt.fit(opt_names)
+
+        ion.set_radial(opt.params)
+        print([state.short() for state in ion.states(Coupling.Intermediate)])
+
+        for line in str_compare(lines, ion.states(Coupling.Intermediate)):
+            print(line)
