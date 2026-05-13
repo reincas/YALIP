@@ -27,8 +27,8 @@ KMEAS = [
 
 STAGE = [
     ["base", "H1/2", "H1/4", "H1/6", "H2"],
-    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", "H3/2"],
-    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", "H3/2", "H5fix", "H6fix"],
+    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2"],
+    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2", "H5fix", "H6fix"],
 ]
 
 
@@ -66,6 +66,9 @@ class LevelFit:
         return energies, mult
 
     def compare(self):
+        """ Return measured and calculated wavenumbers, measurement accuracies, and multiplicities of all measured
+        absorption lines. """
+
         # Calculated energies and multiplicities of all energy levels
         energies, mult = self.get_energies()
 
