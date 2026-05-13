@@ -160,6 +160,6 @@ def str_compare(lines, states):
         result.append((str(i), name_meas, k_meas, dk_meas, k_calc, dk_calc, name_calc))
 
     width = [max(map(len, values)) for values in zip(*result)]
-    fmt = "  ".join([f"{{:{width[i]}s}}" for i in range(len(width))])
+    fmt = "  ".join([f"{{:>{width[i]}s}}" for i in range(len(width))])
     for values in result:
         yield fmt.format(*values)
