@@ -4,10 +4,12 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 
+from functools import lru_cache
 import logging
 import numpy as np
 
 from .ameli import update
+from .fit import LevelFit
 from .matrix import get_matrix, get_energies, get_reduced
 from .spectrum import Reduced, CONST_gs, line_strengths, Cauchy, Sellmeier, oscillator_strengths, radiative_rates
 from .state import Coupling, init_states, StateListJ, StateListM
@@ -181,6 +183,7 @@ class Lanthanide:
 
         pass
 
+    @lru_cache
     def matrix(self, name, coupling=None):
         """ Return Matrix object of the given operator in the given coupling scheme (default: Product). """
 
@@ -237,6 +240,25 @@ class Lanthanide:
 
         # Invalidate previously calculated reduced matrix elements
         self._reduced_ = None
+
+    def level_fit(self, lines, opt_names, radial=None):
+        if self.coupling != Coupling.SLJ:
+            raise NotImplementedError(f"Energy level fit not yet implemented for {self.coupling} coupling!")
+
+        if radial is None:
+            radial = self.radial
+        mult = np.array(self.states(self.coupling).mult)
+        matrices = {name: self.matrix(name, self.coupling) for name in radial.keys() if name != "base"}
+
+        raw_names = [n[1:] if n.startswith(":") else n for n in opt_names]
+        assert len(set(raw_names)) == len(raw_names)
+        params = {n: radial[n] for n in raw_names}
+        opt = LevelFit(params, matrices, mult, lines)
+
+        opt_names = [n for n in opt_names if n != "base" and not n.startswith(":")]
+        opt.fit(opt_names)
+        self.set_radial(opt.params)
+        return opt.params
 
     def line_reduced(self):
         """ Calculate and return all reduced matrix elements required for the calculation of line strengths of
