@@ -5,10 +5,8 @@
 ##########################################################################
 
 import logging
-import numpy as np
 
 from yall import Coupling, Lanthanide, RADIAL
-from yall.fit import str_compare, format_params
 
 logger = logging.getLogger("levelfit")
 
