@@ -95,7 +95,7 @@ class LevelFit:
     def update_params(self, names, values):
         """ Update given radial integrals. """
 
-        self.params |= dict(zip(names, values))
+        self.params = self.params | dict(zip(names, values))
 
     def fit(self, opt_names):
         """ Perform an energy level fit by optimizing the given radial integrals to match measured energy levels. """
@@ -104,7 +104,7 @@ class LevelFit:
             self.update_params(opt_names, values)
             return self.get_residuals()
 
-        logger.info(format_params(self.params, 6))
+        logger.info(f"Initial parameters: {format_params(self.params, 6)}")
         logger.info(f"Initial chi2: {self.get_chi2():.4f}")
 
         # Perform the optimization
@@ -112,7 +112,7 @@ class LevelFit:
         res = least_squares(calculate, initial, method='lm')
         self.update_params(opt_names, res.x.tolist())
 
-        logger.info(format_params(self.params, 6))
+        logger.info(f"Final parameters: {format_params(self.params, 6)}")
         logger.info(f"Final chi2: {self.get_chi2():.4f}")
 
 

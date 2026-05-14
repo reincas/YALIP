@@ -8,7 +8,7 @@ import logging
 import numpy as np
 
 from yall import Coupling, Lanthanide, RADIAL
-from yall.fit import str_compare
+from yall.fit import str_compare, format_params
 
 logger = logging.getLogger("levelfit")
 
@@ -61,9 +61,6 @@ if __name__ == '__main__':
 
     with Lanthanide(num, coupling, radial) as ion:
 
-        for i, opt_names in enumerate(STAGE):
-            opt_params = ion.level_fit(lines, opt_names, radial)
-            radial |= opt_params
-
+        opt_params = ion.level_fit(lines, STAGE, radial)
         for line in ion.str_compare_lines(lines):
-            print(line)
+            logger.debug(line)

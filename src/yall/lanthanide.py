@@ -248,18 +248,26 @@ class Lanthanide:
 
         if radial is None:
             radial = self.radial
+        radial = radial.copy()
+
         mult = np.array(self.states(self.coupling).mult)
         matrices = {name: self.matrix(name, self.coupling) for name in radial.keys() if name != "base"}
 
-        raw_names = [n[1:] if n.startswith(":") else n for n in opt_names]
-        assert len(set(raw_names)) == len(raw_names)
-        params = {n: radial[n] for n in raw_names}
-        opt = LevelFit(params, matrices, mult, lines)
+        if not isinstance(opt_names[0], (list, tuple)):
+            opt_names = [opt_names]
 
-        opt_names = [n for n in opt_names if n != "base" and not n.startswith(":")]
-        opt.fit(opt_names)
+        opt = LevelFit({}, matrices, mult, lines)
+        for names in opt_names:
+            raw_names = [n[1:] if n.startswith(":") else n for n in names]
+            assert len(set(raw_names)) == len(raw_names)
+            opt.params = {n: radial[n] for n in raw_names}
+
+            names = [n for n in names if n != "base" and not n.startswith(":")]
+            opt.fit(names)
+            radial |= opt.params
+
         self.set_radial(opt.params)
-        return opt.params
+        return self.radial
 
     def line_reduced(self):
         """ Calculate and return all reduced matrix elements required for the calculation of line strengths of
