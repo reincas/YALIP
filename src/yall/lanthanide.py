@@ -263,16 +263,16 @@ class Lanthanide:
             opt.params = {n: radial[n] for n in raw_names}
 
             p = format_params(opt.params, 6)
-            c = opt.get_chi2()
-            logger.info(f"Stage {i}: Initial chi2: {c:.4f}, parameters: {p}")
+            dk = opt.get_sigma()
+            logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
 
             names = [n for n in names if n != "base" and not n.startswith(":")]
             opt.fit(names)
             radial |= opt.params
 
             p = format_params(opt.params, 6)
-            c = opt.get_chi2()
-            logger.info(f"Stage {i}: Final chi2: {c:.4f}, parameters: {p}")
+            dk = opt.get_sigma()
+            logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
 
 
         self.set_radial(opt.params)

@@ -84,13 +84,20 @@ class LevelFit:
         accuracies. """
 
         k_meas, k_calc, dk_meas, m = self.compare()
-        return ((k_meas - k_calc) * m) / (sum(m) * dk_meas)
+        return (k_meas - k_calc) * m / dk_meas
 
     def get_chi2(self):
         """ Return square sum of residuals. """
 
         residuals = self.get_residuals()
-        return sum(residuals ** 2)
+        return float(np.sum(residuals ** 2))
+
+    def get_sigma(self):
+        """ Return weighted average deviation of measured and calculated absorption lines. """
+
+        k_meas, k_calc, dk_meas, m = self.compare()
+        return float(np.sqrt(np.sum(((k_meas - k_calc) * m / dk_meas) ** 2)) / np.sum(m / dk_meas))
+
 
     def update_params(self, names, values):
         """ Update given radial integrals. """
