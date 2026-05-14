@@ -9,7 +9,7 @@ import logging
 import numpy as np
 
 from .ameli import update
-from .fit import LevelFit, str_compare
+from .fit import LevelFit, str_compare, format_params
 from .matrix import get_matrix, get_energies, get_reduced
 from .spectrum import Reduced, CONST_gs, line_strengths, Cauchy, Sellmeier, oscillator_strengths, radiative_rates
 from .state import Coupling, init_states, StateListJ, StateListM
@@ -257,14 +257,23 @@ class Lanthanide:
             opt_names = [opt_names]
 
         opt = LevelFit({}, matrices, mult, lines)
-        for names in opt_names:
+        for i, names in enumerate(opt_names):
             raw_names = [n[1:] if n.startswith(":") else n for n in names]
             assert len(set(raw_names)) == len(raw_names)
             opt.params = {n: radial[n] for n in raw_names}
 
+            p = format_params(opt.params, 6)
+            c = opt.get_chi2()
+            logger.info(f"Stage {i}: Initial chi2: {c:.4f}, parameters: {p}")
+
             names = [n for n in names if n != "base" and not n.startswith(":")]
             opt.fit(names)
             radial |= opt.params
+
+            p = format_params(opt.params, 6)
+            c = opt.get_chi2()
+            logger.info(f"Stage {i}: Final chi2: {c:.4f}, parameters: {p}")
+
 
         self.set_radial(opt.params)
         return self.radial

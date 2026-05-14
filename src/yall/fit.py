@@ -104,16 +104,10 @@ class LevelFit:
             self.update_params(opt_names, values)
             return self.get_residuals()
 
-        logger.info(f"Initial parameters: {format_params(self.params, 6)}")
-        logger.info(f"Initial chi2: {self.get_chi2():.4f}")
-
         # Perform the optimization
         initial = [self.params[n] for n in opt_names]
         res = least_squares(calculate, initial, method='lm')
         self.update_params(opt_names, res.x.tolist())
-
-        logger.info(f"Final parameters: {format_params(self.params, 6)}")
-        logger.info(f"Final chi2: {self.get_chi2():.4f}")
 
 
 def str_compare(lines, states):
