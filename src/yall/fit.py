@@ -295,6 +295,8 @@ class Fit:
             logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
 
             self.ion = Levels(self.config, opt.params, None, self.material)
+
+            # Judd-Ofelt fit
             if size == 6:
                 f_lines = [[line[0], line[4], line[5]] for line in lines]
                 judd_ofelt, df = judd_ofelt_fit(self.ion, f_lines)
