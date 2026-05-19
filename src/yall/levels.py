@@ -123,7 +123,7 @@ class Levels:
 
         assert isinstance(config, str)
         assert isinstance(radial, dict)
-        assert isinstance(jo, dict)
+        assert jo is None or isinstance(jo, dict)
 
         # Electron configuration
         self.config = config
