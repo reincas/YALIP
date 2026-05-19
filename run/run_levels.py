@@ -6,9 +6,7 @@
 
 import logging
 import numpy as np
-from typing import cast, Any
 
-from spectrum import jo_factors
 from yall import MATERIAL, Levels
 
 logger = logging.getLogger("run_levels")
@@ -43,20 +41,27 @@ if __name__ == "__main__":
     config = f"f{num}"
 
     ion = Levels(config, radial, jo, material)
+    logger.info("List of states in intermediate coupling:")
     for state in ion.str_levels(min_weight=0.05):
-        print(state)
+        logger.info(f"    {state}")
 
     reduced = ion.dipole
     R = np.column_stack((reduced.U2[1:, 0], reduced.U4[1:, 0], reduced.U6[1:, 0], reduced.LS[1:, 0]))
-    np.set_printoptions(formatter=cast(Any, {'float': '{:7.4f}'.format}), linewidth=120)
-    print(R)
+    logger.info("Squared reduced matrix elements (U2, U4, U6, LS):")
+    for line in R:
+        line = "  ".join([f"{v:7.4f}" for v in line])
+        logger.info(f"    {line}")
 
     f = ion.oscillator_strengths()
     f = np.column_stack((f.ed[1:, 0], f.md[1:, 0])) * 1e8
-    np.set_printoptions(formatter=cast(Any, {'float': '{:7.1f}'.format}), linewidth=120)
-    print(f)
+    logger.info("GSA oscillator strengths (ed, md) in 1e-8:")
+    for line in f:
+        line = "  ".join([f"{v:7.1f}" for v in line])
+        logger.info(f"    {line}")
 
     A = ion.radiative_rates()
     A = np.column_stack((A.ed[-2::-1, -1], A.md[-2::-1, -1]))
-    np.set_printoptions(formatter=cast(Any, {'float': '{:7.0f}'.format}), linewidth=120)
-    print(A)
+    logger.info("Radiative emission rates (ed, md) to ground state in 1/s:")
+    for line in A:
+        line = "  ".join([f"{v:7.0f}" for v in line])
+        logger.info(f"    {line}")

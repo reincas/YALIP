@@ -39,13 +39,13 @@ if __name__ == "__main__":
     config = f"f{num}"
     coupling = Coupling.SLJM
     states = States(config, coupling)
-    print(states)
-    print(f"Number of states: {len(states)}")
+    logger.info(states)
+    logger.info(f"Number of states: {len(states)}")
 
     matrix = states.matrix("H1/2")
-    print(f"Matrix shape: {matrix.shape}")
+    logger.info(f"Matrix shape: {matrix.shape}")
 
-    print(f"List of {coupling.name} coupling states:")
+    logger.info(f"List of {coupling.name} coupling states:")
     for state in states.long():
-        print(f"    {state}")
+        logger.info(f"    {state}")
 
