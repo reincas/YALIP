@@ -386,6 +386,7 @@ def get_ameli_matrix(name, config, state_space):
 
 @lru_cache
 def get_ameli_transform(config):
+    update(config)
     path = AMELI_PATH / config / "transform.zdc"
     meta = read_json(path, "data/transform.json")
     transform = {

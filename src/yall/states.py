@@ -17,7 +17,7 @@ import logging
 import numpy as np
 
 from . import Coupling
-from .ameli import get_ameli_transform, update
+from .ameli import get_ameli_transform
 from .matrix import get_matrix
 
 logger = logging.getLogger("yall.states")
@@ -365,9 +365,6 @@ def get_states(config, coupling):
 
     assert isinstance(config, str)
     assert coupling in (Coupling.Product, Coupling.SLJM, Coupling.SLJ)
-
-    # Update matrix data from the Zenodo repository
-    update(config)
 
     # Read AMELI transformation data container
     data = get_ameli_transform(config)
