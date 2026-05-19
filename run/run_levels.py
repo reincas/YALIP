@@ -10,7 +10,7 @@ from typing import cast, Any
 
 from yall import MATERIAL, Levels
 
-logger = logging.getLogger("run")
+logger = logging.getLogger("run_levels")
 
 
 def init_logger(file_name=None, level=logging.INFO):

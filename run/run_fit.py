@@ -8,7 +8,7 @@ import logging
 
 from yall import RADIAL, MATERIAL, LANTHANIDES, Fit
 
-logger = logging.getLogger("levelfit")
+logger = logging.getLogger("run_fit")
 
 KMEAS = [
     [1, '3H_5', 2365, 4],

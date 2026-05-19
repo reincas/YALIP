@@ -8,7 +8,7 @@ import logging
 
 from yall import Coupling, States
 
-logger = logging.getLogger("states")
+logger = logging.getLogger("run_states")
 
 
 def init_logger(file_name=None, level=logging.INFO):
