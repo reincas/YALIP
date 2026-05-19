@@ -20,7 +20,7 @@ from . import Coupling
 from .ameli import get_ameli_transform, update
 from .matrix import get_matrix
 
-logger = logging.getLogger("yall.state")
+logger = logging.getLogger("yall.states")
 
 SPECTRAL = "spdfghiklmnoqrtuvwxyz"
 
