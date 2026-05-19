@@ -31,7 +31,7 @@ class Coupling(Enum):
     Product = 0
     SLJM = 1
     SLJ = 2
-    Intermediate = 3
+    Intermediate = 999 # Todo ############################################################
 
 
 def norm_magnetic(value):
@@ -46,14 +46,50 @@ def norm_magnetic(value):
     return value
 
 
-class StateList:
-    """ Abstract class for a list of electron states in a certain coupling scheme. The abstract defines some common
-    methods acting on the common attribute states, which contains the list of State objects. """
+##########################################################################
+# Abstract states
+##########################################################################
 
-    coupling = None
-    coupling_base = None
-    states = []
-    transform = None
+class State:
+    """ Abstract class for an electron state in a certain coupling scheme. """
+
+    coupling: Coupling
+    is_intermediate: bool
+
+    def __init__(self, config, mult):
+        """ Store electron configuration and state multiplicity. """
+
+        assert isinstance(config, str)
+        assert isinstance(mult, int)
+
+        # Electron configuration
+        self.config = config
+
+        # State multiplicity
+        self.mult = mult
+
+
+class StateList:
+    """ Abstract class for a list of electron states in a certain coupling scheme. """
+
+    coupling: Coupling
+    is_intermediate: bool
+
+    def __init__(self, config, states, transform):
+        """ Store electron configuration, list of state objects, transformations matrix and list of state
+        multiplicities. """
+
+        # Electron configuration
+        self.config = config
+
+        # List of state objects
+        self.states = states
+
+        # Transformation matrix
+        self.transform = transform
+
+        # List of state multiplicities
+        self.mult = [state.mult for state in self.states]
 
     def __len__(self):
         """ Returns the number of states. """
@@ -66,7 +102,7 @@ class StateList:
         for state in self.states:
             yield state
 
-    def __getitem__(self, item: int):
+    def __getitem__(self, item):
         """ Return the state object with the given index. """
 
         return self.states[item]
@@ -86,15 +122,20 @@ class StateList:
 # Product states
 ##########################################################################
 
-class StateProduct:
+class StateProduct(State):
     """ Class for a determinantal product state. """
 
     coupling = Coupling.Product
+    is_intermediate = False
 
-    def __init__(self, quantum):
-        """ Store the quantum numbers of the electrons of the state. """
+    def __init__(self, config, quantum):
+        """ Store electron configuration and single electron quantum numbers. """
 
+        # Single electron quantum numbers
         self.quantum = quantum
+
+        # Initialise attributes of the parent object
+        super().__init__(config, 1)
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -133,38 +174,49 @@ class StateListProduct(StateList):
     """ Class containing a list of StateProduct objects representing an electron configuration. """
 
     coupling = Coupling.Product
+    is_intermediate = False
 
-    def __init__(self, values, pool):
-        """ Store the given array of electron indices and build the list of StateProduct objects. """
+    def __init__(self, config, values, pool):
+        """ Store electron configuration, single electron pool indices, and pool of single electron quantum numbers.
+        Build the list of product states. """
 
         assert isinstance(values, np.ndarray)
         assert len(values.shape) == 2
 
-        # Pool of single electron quantum numbers
-        self.pool = pool
-
         # Array of indices into the electron pool
         self.values = values
 
-        # List of state objects
-        self.states = [StateProduct([self.pool[i] for i in state]) for state in values]
+        # Pool of single electron quantum numbers
+        self.pool = pool
 
-        # No transformation matrix
-        self.transform = None
+        # List of state objects
+        states = [StateProduct(config, [self.pool[i] for i in state]) for state in values]
+
+        # Initialise attributes of the parent object
+        super().__init__(config, states, None)
 
 
 ##########################################################################
 # SLJM states
 ##########################################################################
 
-class StateSLJM:
+class StateSLJM(State):
     """ Class for an electron state in SLJM coupling following the chain of symmetry operators. """
 
     coupling = Coupling.SLJM
+    is_intermediate = False
 
-    def __init__(self, quantum):
+    def __init__(self, config, quantum):
+        """ Store electron configuration and dictionary of quantum numbers. """
+
+        # Quantum number dictionary
         self.quantum = quantum
+
+        # Quantum number of total angular momentum as string
         self.J = quantum["J2"]
+
+        # Initialise attributes of the parent object
+        super().__init__(config, 1)
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -193,22 +245,38 @@ class StateListSLJM(StateList):
     """ Class containing a list of StateSLJM objects representing an electron configuration. """
 
     coupling = Coupling.SLJM
+    is_intermediate = False
 
-    def __init__(self, values, chain, repr, transform):
+    def __init__(self, config, values, chain, repr, transform):
         assert isinstance(values, np.ndarray)
         assert len(values.shape) == 2
         assert values.shape[1] == len(chain)
         assert set(chain) == set(repr.keys())
 
-        self.values = values
-        self.chain = chain
-        self.repr = repr
-        self.transform = transform
+        # Electron configuration
+        self.config = config
 
-        self.states = [StateSLJM({sym: repr[sym][state[i]] for i, sym in enumerate(chain)}) for state in values]
-        self.J = [state.J for state in self.states]
+        # Dictionary of indices into the lists of irreducible representations for all states
+        self.values = values
+
+        # Chain of symmetry operator names
+        self.chain = chain
+
+        # Dictionary of lists of all irreducible representations
+        self.repr = repr
+
+        # List of SLJM states
+        states = [StateSLJM(config, {sym: repr[sym][s[i]] for i, sym in enumerate(chain)}) for s in values]
+
+        # Values of total angular momentum as list of strings
+        self.J = [state.J for state in states]
+
+        # Initialise attributes of the parent object
+        super().__init__(config, states, transform)
 
     def stretched(self):
+        """ Return a list indices containing all stretched states. """
+
         return [i for i, state in enumerate(self.states) if state["Jz"].replace("+", "") == state["J2"]]
 
 
@@ -216,15 +284,29 @@ class StateListSLJM(StateList):
 # SLJ states
 ##########################################################################
 
-class StateSLJ:
+class StateSLJ(State):
     """ Class for an electron state in SLJ coupling following the chain of symmetry operators. """
 
     coupling = Coupling.SLJ
+    is_intermediate = False
 
-    def __init__(self, quantum):
+    def __init__(self, config, quantum):
+        """ Store electron configuration and dictionary of quantum numbers. """
+
+        # Quantum number dictionary
         self.quantum = quantum
+
+        # Quantum number of total angular momentum as string
         self.J = quantum["J2"]
-        self.mult = 2 * float(self.J) + 1
+
+        # State multiplicity
+        if self.J.endswith("/2"):
+            mult = int(self.J[:-2]) + 1
+        else:
+            mult = 2 * int(self.J) + 1
+
+        # Initialise attributes of the parent object
+        super().__init__(config, mult)
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -253,36 +335,48 @@ class StateListSLJ(StateList):
     """ Class containing a list of StateSLJ objects representing an electron configuration. """
 
     coupling = Coupling.SLJ
+    is_intermediate = False
 
-    def __init__(self, values, chain, repr, transform):
+    def __init__(self, config, values, chain, repr, transform):
         assert isinstance(values, np.ndarray)
         assert len(values.shape) == 2
         assert values.shape[1] == len(chain)
         assert set(chain) == set(repr.keys())
 
-        self.values = values
-        self.chain = chain
-        self.repr = repr
-        self.transform = transform
+        # Electron configuration
+        self.config = config
 
-        self.states = [StateSLJ({sym: repr[sym][state[i]] for i, sym in enumerate(chain)}) for state in values]
-        self.J = [state.J for state in self.states]
-        self.mult = [2 * float(J) + 1 for J in self.J]
+        # Dictionary of indices into the lists of irreducible representations for all states
+        self.values = values
+
+        # Chain of symmetry operator names
+        self.chain = chain
+
+        # Dictionary of lists of all irreducible representations
+        self.repr = repr
+
+        # List of SLJ states
+        states = [StateSLJ(config, {sym: repr[sym][s[i]] for i, sym in enumerate(chain)}) for s in values]
+
+        # Values of total angular momentum as list of strings
+        self.J = [state.J for state in states]
+
+        # Initialise attributes of the parent object
+        super().__init__(config, states, transform)
 
 
 ##########################################################################
 # Intermediate SLJ states
 ##########################################################################
 
-class StateJ:
+class StateJ(State):
     """ Class for an electron state in an intermediate coupling of SLJ states. """
 
-    coupling = Coupling.Intermediate
-    coupling_base = Coupling.SLJ
+    coupling = Coupling.SLJ
+    is_intermediate = True
 
     def __init__(self, energy, values, states):
-        """ Store the energy level of the state and the vector (values) for the linear combination of the given
-        SLJ states. """
+        """ Store the energy level of the state and the linear combination vector of the given SLJ states. """
 
         assert isinstance(energy, float)
         assert isinstance(values, np.ndarray)
@@ -293,21 +387,25 @@ class StateJ:
         # Energy level of the state
         self.energy = energy
 
-        # Sort states by weight
+        # Sort states by decreasing weight
         weights = np.abs(values * values.conjugate())
         indices = list(reversed(np.argsort(weights)))
 
-        # Linear combination vector and weight factor vector
+        # Linear combination vector
         self.values = values[indices]
+
+        # Weight factor vector
         self.weights = weights[indices]
         assert abs(sum(self.weights) - 1.0) < 1e-7
 
         # The state in intermediate coupling is a linear combination of this list of related SLJ states
         self.states = [states[i] for i in indices]
 
-        # Common quantum number J of the total angular momentum of all related SLJ states
+        # Quantum number of total angular momentum as string
         self.J = self.states[0].J
-        self.mult = 2 * float(self.J) + 1
+
+        # Initialise attributes of the parent object
+        super().__init__(self.states[0].config, self.states[0].mult)
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -329,56 +427,54 @@ class StateJ:
 class StateListJ(StateList):
     """ Class containing a list of StateJ objects representing an electron state in an intermediate SLJ coupling. """
 
-    coupling = Coupling.Intermediate
-    coupling_base = Coupling.SLJ
+    coupling = Coupling.SLJ
+    is_intermediate = True
 
     def __init__(self, slj_states, energies, transform):
-        """ Store the given StateListSLJ object with the list of related SLJ states, the energies of all states and
-        the transformation matrix representing the linear combination of the SLJ states. """
+        """ Store the given SLJ states, the energies of all states and the matrix containing the linear combination
+        (columns) vectors of all states. """
 
         assert isinstance(slj_states, StateListSLJ)
         assert len(transform.shape) == 2 and transform.shape[0] == transform.shape[1]
         assert len(energies) == len(slj_states) == transform.shape[0]
 
-        # Store the SLJ states, energy levels and the transformation matrix from SLJ to intermediate coupling
+        # List of SLJ states
         self.slj_states = slj_states
+
+        # List of energy levels
         self.energies = energies
-        self.transform = transform
 
         # Matrix of weight factors for the SLJ components or each state in intermediate coupling
-        weight = np.abs(self.transform * self.transform.conj())
+        weight = np.abs(transform * transform.conj())
 
         # J quantum number of each state in intermediate coupling is taken from its main SLJ component
-        self.J = [self.slj_states.J[i] for i in np.argmax(weight, axis=0)]
-        self.mult = [2 * float(J) + 1 for J in self.J]
+        self.J = [slj_states.J[i] for i in np.argmax(weight, axis=0)]
 
-        # Build the list of StateJ objects
-        self.states = []
-        for i in range(len(self.slj_states)):
+        # Build list of StateJ objects
+        states = []
+        for i in range(len(slj_states)):
             # Indices of all SLJ states with the same quantum number J as the current state
-            indices = np.array(np.argwhere(np.array(self.slj_states.J) == self.J[i]).flat)
-
-            # Combination vector and SLJ states for the linear combination of the current state
-            values = self.transform[indices, i]
-            slj_states = [self.slj_states[i] for i in indices]
+            indices = np.array(np.argwhere(np.array(slj_states.J) == self.J[i]).flat)
 
             # Add StateJ object representing the current state in intermediate coupling
-            self.states.append(StateJ(energies[i], values, slj_states))
+            states.append(StateJ(energies[i], transform[indices, i], [slj_states[i] for i in indices]))
+
+        # Initialise attributes of the parent object
+        super().__init__(slj_states.config, states, transform)
 
 
 ##########################################################################
 # Intermediate SLJM states
 ##########################################################################
 
-class StateM:
+class StateM(State):
     """ Class for an electron state in an intermediate coupling of SLJM states. """
 
-    coupling = Coupling.Intermediate
-    coupling_base = Coupling.SLJM
+    coupling = Coupling.SLJM
+    is_intermediate = True
 
     def __init__(self, energy, values, states):
-        """ Store the energy level of the state and the vector (values) for the linear combination of the given
-        SLJM states. """
+        """ Store the energy level of the state and the linear combination vector of the given SLJM states. """
 
         assert isinstance(energy, float)
         assert isinstance(values, np.ndarray)
@@ -388,17 +484,23 @@ class StateM:
         # Energy level of the state
         self.energy = energy
 
-        # Sort states by weight
+        # Sort states by decreasing weight
         weights = np.abs(values * values.conjugate())
         indices = list(reversed(np.argsort(weights)))
 
-        # Linear combination vector and weight factor vector
+        # Linear combination vector
         self.values = values[indices]
+
+        # Weight factor vector
         self.weights = weights[indices]
         assert abs(sum(self.weights) - 1.0) < 1e-7
 
         # The state in intermediate coupling is a linear combination of this list of related SLJM states
         self.states = [states[i] for i in indices]
+
+        # Initialise attributes of the parent object
+        super().__init__(self.states[0].config, self.states[0].mult)
+        assert self.mult == 1
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -418,32 +520,35 @@ class StateM:
 
 
 class StateListM(StateList):
-    """ Class containing a list of StateJM objects representing an electron state in an intermediate coupling
-    of SLJM states. """
+    """ Class containing a list of StateM objects representing an electron state in an intermediate SLJM coupling. """
 
-    coupling = Coupling.Intermediate
-    coupling_base = Coupling.SLJM
+    coupling = Coupling.SLJM
+    is_intermediate = True
 
     def __init__(self, sljm_states, energies, transform):
-        """ Store the given StateListSLJM object with the list of related SLJM states, the energies of all states and
-        the transformation matrix representing the linear combination of the SLJM states. """
+        """ Store the given SLJM states, the energies of all states and the matrix containing the linear combination
+        (columns) vectors of all states. """
 
         assert isinstance(sljm_states, StateListSLJM)
         assert len(transform.shape) == 2 and transform.shape[0] == transform.shape[1]
         assert len(energies) == len(sljm_states) == transform.shape[0]
 
-        # Store the SLJM states, energy levels and the transformation matrix from SLJM to intermediate coupling
+        # List of SLJM states
         self.sljm_states = sljm_states
-        self.energies = energies
-        self.transform = transform
 
-        # Build the list of StateJM objects
-        self.states = []
-        for i in range(len(self.sljm_states)):
-            # Add StateM object representing the current state in intermediate coupling
-            values = self.transform[:, i]
-            sljm_states = list(self.sljm_states.states)
-            self.states.append(StateM(energies[i], values, sljm_states))
+        # List of energy levels
+        self.energies = energies
+
+        # Build list of StateJ objects
+        states = []
+        for i in range(len(sljm_states)):
+            values = transform[:, i]
+            sljm_states = list(sljm_states.states)
+            states.append(StateM(energies[i], values, sljm_states))
+
+        # Initialise attributes of the parent object
+        super().__init__(sljm_states.config, states, transform)
+        assert set(self.mult) == {1}
 
 
 ##########################################################################
@@ -453,13 +558,13 @@ class StateListM(StateList):
 def init_states(config):
     data = read_transform(config)
 
-    Product_States = StateListProduct(data["rowStates"], data["electronPool"])
+    Product_States = StateListProduct(config, data["rowStates"], data["electronPool"])
 
     values = data["colStates"]
     chain = data["tensorChain"]
     transform = data["transform"]
     reprs = data["irreducibleRepresentations"]
-    SLJM_states = StateListSLJM(values, chain, reprs, transform)
+    SLJM_states = StateListSLJM(config, values, chain, reprs, transform)
 
     indices = SLJM_states.stretched()
     assert chain[-1] == "Jz"
@@ -467,12 +572,11 @@ def init_states(config):
     chain = chain[:-1]
     del reprs["Jz"]
     transform = transform[:, indices]
-    SLJ_states = StateListSLJ(values, chain, reprs, transform)
+    SLJ_states = StateListSLJ(config, values, chain, reprs, transform)
 
     # Return StateList dictionary
     return {
         Coupling.Product.name: Product_States,
         Coupling.SLJM.name: SLJM_states,
         Coupling.SLJ.name: SLJ_states,
-        Coupling.Intermediate.name: None,
     }
