@@ -449,3 +449,8 @@ class States:
         """ Return the reduced matrix of the given tensor operator or the weighted sum of tensor operators. """
 
         return self.states.reduced(name)
+
+    def __str__(self):
+        """ Return a string representation of the object. """
+
+        return f"States({self.config}, {self.coupling.name})"
