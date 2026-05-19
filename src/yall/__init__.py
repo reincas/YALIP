@@ -8,9 +8,6 @@ from enum import Enum
 
 
 class Coupling(Enum):
-    """ This enumeration class is used to mark the four coupling schemes used in the Lanthanide package: determinantal
-    product state coupling, SLJM coupling, SLJ coupling, and intermediate coupling. """
-
     Product = 0
     SLJM = 1
     SLJ = 2
