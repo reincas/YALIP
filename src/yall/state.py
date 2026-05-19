@@ -44,17 +44,19 @@ def norm_magnetic(value):
 class State:
     """ Abstract class for an electron state in a certain coupling scheme. """
 
-    coupling: Coupling
-
-    def __init__(self, config, J=None, mult=1):
+    def __init__(self, config, coupling, J=None, mult=1):
         """ Store electron configuration and state multiplicity. """
 
         assert isinstance(config, str)
+        assert isinstance(coupling, Coupling)
         assert J is None or isinstance(J, str)
         assert isinstance(mult, int)
 
         # Electron configuration
         self.config = config
+
+        # Coupling scheme
+        self.coupling = coupling
 
         # Quantum number of total angular momentum as string
         self.J = J
@@ -70,14 +72,19 @@ class State:
 class StateList:
     """ Abstract class for a list of electron states in a certain coupling scheme. """
 
-    coupling: Coupling
-
-    def __init__(self, config, states, transform=None):
+    def __init__(self, config, coupling, states, transform=None):
         """ Store electron configuration, list of state objects, transformations matrix and list of state
         multiplicities. """
 
+        assert isinstance(config, str)
+        assert isinstance(coupling, Coupling)
+        assert isinstance(states, list)
+
         # Electron configuration
         self.config = config
+
+        # Coupling scheme
+        self.coupling = coupling
 
         # List of state objects
         self.states = states
@@ -140,8 +147,6 @@ class StateList:
 class StateProduct(State):
     """ Class for a determinantal product state. """
 
-    coupling = Coupling.Product
-
     def __init__(self, config, quantum):
         """ Store electron configuration and single electron quantum numbers. """
 
@@ -149,7 +154,7 @@ class StateProduct(State):
         self.quantum = quantum
 
         # Initialise attributes of the parent object
-        super().__init__(config)
+        super().__init__(config, Coupling.Product)
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -187,8 +192,6 @@ class StateProduct(State):
 class StateListProduct(StateList):
     """ Class containing a list of StateProduct objects representing an electron configuration. """
 
-    coupling = Coupling.Product
-
     def __init__(self, config, values, pool):
         """ Store electron configuration, single electron pool indices, and pool of single electron quantum numbers.
         Build the list of product states. """
@@ -206,7 +209,7 @@ class StateListProduct(StateList):
         states = [StateProduct(config, [self.pool[i] for i in state]) for state in values]
 
         # Initialise attributes of the parent object
-        super().__init__(config, states)
+        super().__init__(config, Coupling.Product, states)
 
 
 ##########################################################################
@@ -216,8 +219,6 @@ class StateListProduct(StateList):
 class StateSLJM(State):
     """ Class for an electron state in SLJM coupling following the chain of symmetry operators. """
 
-    coupling = Coupling.SLJM
-
     def __init__(self, config, quantum):
         """ Store electron configuration and dictionary of quantum numbers. """
 
@@ -225,7 +226,7 @@ class StateSLJM(State):
         self.quantum = quantum
 
         # Initialise attributes of the parent object
-        super().__init__(config, quantum["J2"])
+        super().__init__(config, Coupling.SLJM, quantum["J2"])
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -253,16 +254,11 @@ class StateSLJM(State):
 class StateListSLJM(StateList):
     """ Class containing a list of StateSLJM objects representing an electron configuration. """
 
-    coupling = Coupling.SLJM
-
     def __init__(self, config, values, chain, repr, transform):
         assert isinstance(values, np.ndarray)
         assert len(values.shape) == 2
         assert values.shape[1] == len(chain)
         assert set(chain) == set(repr.keys()), f"{set(chain)} != {set(repr.keys())}"
-
-        # Electron configuration
-        self.config = config
 
         # Dictionary of indices into the lists of irreducible representations for all states
         self.values = values
@@ -277,7 +273,7 @@ class StateListSLJM(StateList):
         states = [StateSLJM(config, {sym: repr[sym][s[i]] for i, sym in enumerate(chain)}) for s in values]
 
         # Initialise attributes of the parent object
-        super().__init__(config, states, transform)
+        super().__init__(config, Coupling.SLJM, states, transform)
 
     def stretched(self):
         """ Return a list indices containing all stretched states. """
@@ -291,8 +287,6 @@ class StateListSLJM(StateList):
 
 class StateSLJ(State):
     """ Class for an electron state in SLJ coupling following the chain of symmetry operators. """
-
-    coupling = Coupling.SLJ
 
     def __init__(self, config, quantum):
         """ Store electron configuration and dictionary of quantum numbers. """
@@ -308,7 +302,7 @@ class StateSLJ(State):
             mult = 2 * int(J) + 1
 
         # Initialise attributes of the parent object
-        super().__init__(config, J, mult)
+        super().__init__(config, Coupling.SLJ, J, mult)
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -336,8 +330,6 @@ class StateSLJ(State):
 class StateListSLJ(StateList):
     """ Class containing a list of StateSLJ objects representing an electron configuration. """
 
-    coupling = Coupling.SLJ
-
     def __init__(self, config, values, chain, repr, transform):
         assert isinstance(values, np.ndarray)
         assert len(values.shape) == 2
@@ -360,7 +352,7 @@ class StateListSLJ(StateList):
         states = [StateSLJ(config, {sym: repr[sym][s[i]] for i, sym in enumerate(chain)}) for s in values]
 
         # Initialise attributes of the parent object
-        super().__init__(config, states, transform)
+        super().__init__(config, Coupling.SLJ, states, transform)
 
 
 ##########################################################################

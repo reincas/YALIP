@@ -25,9 +25,6 @@ class IntermediateState(State):
         assert isinstance(base_states, list)
         assert len(base_states) == len(values)
 
-        # Coupling scheme
-        self.coupling = base_states[0].coupling
-
         # Energy level of the state
         self.energy = energy
 
@@ -46,7 +43,8 @@ class IntermediateState(State):
         self.states = [base_states[i] for i in indices]
 
         # Initialise attributes of the parent object
-        super().__init__(self.states[0].config, self.states[0].J, self.states[0].mult)
+        ref = self.states[0]
+        super().__init__(ref.config, ref.coupling, ref.J, ref.mult)
 
     def short(self):
         """ Return a short string representation of the state. """
@@ -78,14 +76,14 @@ class IntermediateList(StateList):
 
         # List of base states
         self.base_states = base_states
-        self.coupling = base_states.coupling
-        assert self.coupling in (Coupling.SLJM, Coupling.SLJ)
+        coupling = base_states.coupling
+        assert coupling in (Coupling.SLJM, Coupling.SLJ)
 
         # List of energy levels
         self.energies = energies
 
         # J quantum number of each state in intermediate coupling is taken from its main SLJ component
-        if self.coupling == Coupling.SLJM:
+        if coupling == Coupling.SLJM:
             self.J = None
         else:
             weight = np.abs(transform * transform.conj())
@@ -94,14 +92,14 @@ class IntermediateList(StateList):
         # Build list of IntermediateState objects
         states = []
         for i in range(len(base_states)):
-            if self.coupling == Coupling.SLJM:
+            if coupling == Coupling.SLJM:
                 states.append(IntermediateState(energies[i], transform[:, i], list(base_states.states)))
             else:
                 indices = np.array(np.argwhere(np.array(base_states.J) == self.J[i]).flat)
                 states.append(IntermediateState(energies[i], transform[indices, i], [base_states[i] for i in indices]))
 
         # Initialise attributes of the parent object
-        super().__init__(base_states.config, states, transform)
+        super().__init__(base_states.config, coupling, states, transform)
 
 
     def matrix(self, name):
