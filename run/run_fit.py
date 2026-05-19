@@ -6,11 +6,7 @@
 
 import logging
 
-import numpy as np
-
-from yall import RADIAL, MATERIAL, LANTHANIDES, Levels, Coupling
-from yall.states import get_states
-from yall.fit import LevelFit, format_params, str_compare
+from yall import RADIAL, MATERIAL, LANTHANIDES, Fit
 
 logger = logging.getLogger("levelfit")
 
@@ -27,7 +23,7 @@ KMEAS = [
     [11, '3P_2', 22645, 10]
 ]
 
-STAGE = [
+STAGES = [
     ["base", "H1/2", "H1/4", "H1/6", "H2"],
     ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2"],
     ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2", "H5fix", "H6fix"],
@@ -51,52 +47,20 @@ def init_logger(file_name=None, level=logging.INFO):
     root.addHandler(console_h)
 
 
-def level_fit(base_states, radial, lines, opt_names):
-    if base_states.coupling != Coupling.SLJ:
-        raise NotImplementedError(f"Energy level fit not yet implemented for {base_states.coupling} coupling!")
-
-    radial = radial.copy()
-
-    mult = np.array(base_states.mult)
-    matrices = {name: base_states.matrix(name) for name in radial.keys() if name != "base"}
-
-    if not isinstance(opt_names[0], (list, tuple)):
-        opt_names = [opt_names]
-
-    opt = LevelFit({}, matrices, mult, lines)
-    for i, names in enumerate(opt_names):
-        raw_names = [n[1:] if n.startswith(":") else n for n in names]
-        assert len(set(raw_names)) == len(raw_names)
-        opt.params = {n: radial[n] for n in raw_names}
-
-        p = format_params(opt.params, 6)
-        dk = opt.get_sigma()
-        logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
-
-        names = [n for n in names if n != "base" and not n.startswith(":")]
-        opt.fit(names)
-        radial |= opt.params
-
-        p = format_params(opt.params, 6)
-        dk = opt.get_sigma()
-        logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
-
-    return opt.params
-
-
 if __name__ == '__main__':
     init_logger(level=logging.DEBUG)
 
     name = "Pr3+"
     radial = RADIAL[name]
     lines = KMEAS
+
+    jo = None
     material = MATERIAL["Pb:ZBLAN"]
 
     num = LANTHANIDES.index(name[:2])
     config = f"f{num}"
-    states = get_states(config, Coupling.SLJ)
 
-    opt_params = level_fit(states, radial, lines, STAGE)
-    ion = Levels(config, opt_params, material)
-    for line in str_compare(lines, ion.states):
+    opt = Fit(config, radial, jo, material)
+    opt.level_fit(lines, STAGES)
+    for line in opt.str_compare():
         logger.debug(line)

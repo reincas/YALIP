@@ -8,7 +8,11 @@ import logging
 import numpy as np
 from scipy.optimize import least_squares
 
-logger = logging.getLogger("fit")
+from yall import Levels
+from . import Coupling
+from .states import get_states
+
+logger = logging.getLogger("yall.fit")
 
 
 def format_significant(value, num):
@@ -23,13 +27,19 @@ def format_params(params, num):
 
 
 class LevelFit:
-    def __init__(self, params, matrices, mult, lines):
-        self.params = params
+    def __init__(self, matrices, mult, lines):
         self.matrices = matrices
         self.mult = mult
         self.lines = lines
 
+        self.params = {}
         self.num_states = self.matrices[next(iter(matrices.keys()))].shape[0]
+
+    def set_params(self, params):
+        """ Store a set of radial parameters. """
+
+        assert isinstance(params, dict)
+        self.params = params
 
     def get_energies(self):
         """ Diagonalize the total perturbation Hamiltonian and return the energies and multiplicities of all states
@@ -163,3 +173,92 @@ def str_compare(lines, states):
     fmt = "  ".join([f"{{:>{width[i]}s}}" for i in range(len(width))])
     for values in result:
         yield fmt.format(*values)
+
+
+class Fit:
+    def __init__(self, config, radial, jo=None, material=None):
+
+        assert isinstance(config, str)
+        assert isinstance(radial, dict)
+        assert jo is None or isinstance(jo, dict)
+
+        # Electron configuration
+        self.config = config
+
+        # Intermediate coupling object
+        self.ion = Levels(config, radial, jo, material)
+
+        # Material object providing spectral refractive indices
+        self.material = material
+
+        # State multiplicities
+        self.mult = np.array(self.base_states.mult)
+
+        # Perturbation energy matrices
+        self.matrices = {name: self.base_states.matrix(name) for name in radial.keys() if name != "base"}
+
+        # No fit yet
+        self.levels = None
+        self.ion
+
+    @property
+    def coupling(self):
+        """ Coupling scheme. """
+
+        return self.ion.coupling
+
+    @property
+    def base_states(self):
+        """ Basis states. """
+
+        return self.ion.base_states
+
+    @property
+    def radial_integrals(self):
+        """ Radial integrals. """
+
+        return self.ion.radial_integrals
+
+    @property
+    def judd_ofelt(self):
+        """ Judd-Ofelt parameters. """
+
+        return self.ion.judd_ofelt
+
+    def level_fit(self, lines, stages):
+        """ Multi-stage energy level fit to measured absorption lines."""
+
+        # Measured absorption lines
+        self.lines = lines
+
+        # Copy values of radial integrals
+        radial = self.radial_integrals.copy()
+
+        # Handle single optimisation stage
+        if not isinstance(stages[0], (list, tuple)):
+            stages = [stages]
+
+        opt = LevelFit(self.matrices, self.mult, lines)
+        for i, names in enumerate(stages):
+            raw_names = [n[1:] if n.startswith(":") else n for n in names]
+            assert len(set(raw_names)) == len(raw_names)
+            opt.set_params({n: radial[n] for n in raw_names})
+
+            p = format_params(opt.params, 6)
+            dk = opt.get_sigma()
+            logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
+
+            names = [n for n in names if n != "base" and not n.startswith(":")]
+            opt.fit(names)
+            radial |= opt.params
+
+            p = format_params(opt.params, 6)
+            dk = opt.get_sigma()
+            logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
+
+        self.ion = Levels(self.config, opt.params, self.judd_ofelt, self.material)
+
+    def str_compare(self):
+        assert self.lines is not None, "Run an energy level fit first!"
+
+        yield from str_compare(self.lines, self.ion.states)
