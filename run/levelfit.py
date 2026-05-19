@@ -8,7 +8,7 @@ import logging
 
 import numpy as np
 
-from yall import RADIAL, MATERIAL, LANTHANIDES, Intermediate, Coupling
+from yall import RADIAL, MATERIAL, LANTHANIDES, Levels, Coupling
 from yall.states import get_states
 from yall.fit import LevelFit, format_params, str_compare
 
@@ -97,6 +97,6 @@ if __name__ == '__main__':
     states = get_states(config, Coupling.SLJ)
 
     opt_params = level_fit(states, radial, lines, STAGE)
-    ion = Intermediate(config, opt_params, material)
+    ion = Levels(config, opt_params, material)
     for line in str_compare(lines, ion.states):
         logger.debug(line)

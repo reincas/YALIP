@@ -116,8 +116,8 @@ class IntermediateList(StateList):
         return self.transform.T @ matrix @ self.transform
 
 
-class Intermediate:
-    """ Intermediate coupling class. """
+class Levels:
+    """ Intermediate coupling class providing energy levels and radiative transitions. """
 
     def __init__(self, config, radial, material):
 

@@ -8,7 +8,7 @@ import logging
 import numpy as np
 from typing import cast, Any
 
-from yall import MATERIAL, Intermediate
+from yall import MATERIAL, Levels
 
 logger = logging.getLogger("run")
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     num = 2
     config = f"f{num}"
 
-    ion = Intermediate(config, radial, material)
+    ion = Levels(config, radial, material)
     for state in ion.str_levels(min_weight=0.05):
         print(state)
 
