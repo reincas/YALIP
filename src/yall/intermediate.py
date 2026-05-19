@@ -148,14 +148,13 @@ class Intermediate:
 
         # Matrix elements required to calculate dipole transition strengths
         if self.coupling == Coupling.SLJM:
-            func = self.matrix
+            self.dipole = None
         else:
-            func = self.reduced
-        self.dipole = Dipole(
-            U2=np.power(func("U/2"), 2),
-            U4=np.power(func("U/4"), 2),
-            U6=np.power(func("U/6"), 2),
-            LS=np.power(func({"L": 1.0, "S": CONST_gs}), 2))
+            self.dipole = Dipole(
+                U2=np.power(self.reduced("U/2"), 2),
+                U4=np.power(self.reduced("U/4"), 2),
+                U6=np.power(self.reduced("U/6"), 2),
+                LS=np.power(self.reduced({"L": 1.0, "S": CONST_gs}), 2))
 
     @property
     def energies(self):
@@ -186,18 +185,24 @@ class Intermediate:
         """ Calculate and return matrices containing the line strengths in Jm^3 of all electric and magnetic dipole
         transitions. Rows refer to final and columns to initial states. """
 
+        if self.coupling == Coupling.SLJM:
+            raise NotImplementedError("Not yet implemented for SLJM coupling!")
         return line_strengths(self.radial, self.dipole, self.mult)
 
     def oscillator_strengths(self):
         """ Calculate and return matrices containing the dimensionless oscillator strengths of all electric and
         magnetic dipole transitions. Rows refer to final and columns to initial states. """
 
+        if self.coupling == Coupling.SLJM:
+            raise NotImplementedError("Not yet implemented for SLJM coupling!")
         return oscillator_strengths(self.radial, self.dipole, self.mult, self.energies, self.material)
 
     def radiative_rates(self):
         """ Calculate and return matrices containing the radiative emission rates in 1/s of all electric and magnetic
         dipole transitions. Rows refer to final and columns to initial states. """
 
+        if self.coupling == Coupling.SLJM:
+            raise NotImplementedError("Not yet implemented for SLJM coupling!")
         return radiative_rates(self.radial, self.dipole, self.mult, self.energies, self.material)
 
     def str_levels(self, min_weight=0.0):
