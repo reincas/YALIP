@@ -8,9 +8,8 @@ import logging
 import numpy as np
 from scipy.optimize import least_squares
 
-from yall import Levels
-from . import Coupling
-from .states import get_states
+from .spectrum import jo_factors
+from .levels import Levels
 
 logger = logging.getLogger("yall.fit")
 
@@ -24,6 +23,10 @@ def format_significant(value, num):
 
 def format_params(params, num):
     return ", ".join([f"'{k}': {format_significant(params[k], num)}" for k in sorted(params.keys())])
+
+
+def format_fixed(params, num):
+    return ", ".join([f"'{k}': {params[k]:.{num}f}" for k in sorted(params.keys())])
 
 
 class LevelFit:
@@ -70,17 +73,14 @@ class LevelFit:
 
         # Collect comparison data
         results = []
-        for line in self.lines:
-            idx = line[0]
-            k_meas = line[2]
-            dk_meas = line[3]
-            if isinstance(idx, (list, tuple)):
+        for idx, k_meas, dk_meas in self.lines:
+            if isinstance(idx, int):
+                m = mult[idx]
+                k_calc = energies[idx]
+            else:
                 idx = np.array(idx)
                 m = np.sum(mult[idx])
                 k_calc = np.sum(energies[idx] * mult[idx]) / m
-            else:
-                m = mult[idx]
-                k_calc = energies[idx]
             results.append((k_meas, k_calc, dk_meas, m))
         k_meas, k_calc, dk_meas, m = np.array(results).T
 
@@ -127,6 +127,36 @@ class LevelFit:
         initial = [self.params[n] for n in opt_names]
         res = least_squares(calculate, initial, method='lm')
         self.update_params(opt_names, res.x.tolist())
+
+
+def judd_ofelt_fit(ion, lines):
+
+    assert isinstance(ion, Levels)
+    assert isinstance(lines, list)
+
+    factor_ed, factor_md = jo_factors(ion.mult[0], ion.energies, ion.material)
+    fed = np.column_stack((ion.dipole.U2[:, 0], ion.dipole.U4[:, 0], ion.dipole.U6[:, 0])) * factor_ed[:, None]
+    fmd = ion.dipole.LS[:, 0] * factor_md
+
+    A = np.zeros((len(lines), 3), dtype=float)
+    b = np.zeros(len(lines), dtype=float)
+    for i, (idx, f_meas, df_meas) in enumerate(lines):
+        if isinstance(idx, int):
+            b[i] = (f_meas - fmd[idx]) / df_meas
+            A[i,:] = fed[idx, :] / df_meas
+        else:
+            idx = np.array(idx)
+            b[i] = (f_meas - np.sum(fmd[idx])) / df_meas
+            A[i,:] = np.sum(fed[idx, :], axis=0) / df_meas
+
+    omega, residuals, rank, _ = np.linalg.lstsq(A, b, rcond=None)
+    chi2 = residuals[0]
+    assert rank == 3
+
+    df_meas = np.array([line[2] for line in lines])
+    sigma = float(np.sqrt(chi2 / np.sum(1 / df_meas ** 2))) * 1e8
+    judd_ofelt = {f"JO/{2*i+2}": value for i, value in enumerate(omega)}
+    return judd_ofelt, sigma
 
 
 def str_compare(lines, states):
@@ -180,17 +210,16 @@ def str_compare(lines, states):
 
 
 class Fit:
-    def __init__(self, config, radial, jo=None, material=None):
+    def __init__(self, config, radial, material=None):
 
         assert isinstance(config, str)
         assert isinstance(radial, dict)
-        assert jo is None or isinstance(jo, dict)
 
         # Electron configuration
         self.config = config
 
         # Intermediate coupling object
-        self.ion = Levels(config, radial, jo, material)
+        self.ion = Levels(config, radial, None, material)
 
         # Material object providing spectral refractive indices
         self.material = material
@@ -232,7 +261,13 @@ class Fit:
         """ Multi-stage energy level fit to measured absorption lines."""
 
         # Measured absorption lines
+        assert isinstance(lines, list)
+        size = set(len(line) for line in lines)
+        assert len(size) == 1
+        size = size.pop()
+        assert size in (4, 6)
         self.lines = lines
+        k_lines = [[line[0], line[2], line[3]] for line in lines]
 
         # Copy values of radial integrals
         radial = self.radial_integrals.copy()
@@ -241,7 +276,7 @@ class Fit:
         if not isinstance(stages[0], (list, tuple)):
             stages = [stages]
 
-        opt = LevelFit(self.matrices, self.mult, lines)
+        opt = LevelFit(self.matrices, self.mult, k_lines)
         for i, names in enumerate(stages):
             raw_names = [n[1:] if n.startswith(":") else n for n in names]
             assert len(set(raw_names)) == len(raw_names)
@@ -259,7 +294,13 @@ class Fit:
             dk = opt.get_sigma()
             logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
 
-        self.ion = Levels(self.config, opt.params, self.judd_ofelt, self.material)
+            self.ion = Levels(self.config, opt.params, None, self.material)
+            if size == 6:
+                f_lines = [[line[0], line[4], line[5]] for line in lines]
+                judd_ofelt, df = judd_ofelt_fit(self.ion, f_lines)
+                self.ion.judd_ofelt = judd_ofelt
+                p = format_fixed(judd_ofelt, 3)
+                logger.info(f"Stage {i}: Final df: {df:.2f}, parameters: {p}")
 
     def str_compare(self):
         assert self.lines is not None, "Run an energy level fit first!"

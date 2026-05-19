@@ -61,7 +61,7 @@ if __name__ == '__main__':
     num = LANTHANIDES.index(name[:2])
     config = f"f{num}"
 
-    opt = Fit(config, radial, jo, material)
+    opt = Fit(config, radial, material)
     opt.level_fit(lines, stages)
     for line in opt.str_compare():
         logger.debug(line)

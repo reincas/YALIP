@@ -4,9 +4,8 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 
-import logging
 from dataclasses import dataclass
-
+import logging
 import numpy as np
 
 logger = logging.getLogger("yall.spectrum")
@@ -110,6 +109,25 @@ class Sellmeier:
         return n
 
 
+def jo_factors(mult, k, material):
+    """ Return Judd-Ofelt factors for the calculation of dipole oscillator strengths of ground state absorptions. """
+
+    assert isinstance(mult, int)
+    assert isinstance(k, (list, np.ndarray))
+
+    dk = np.array(k)
+    dk -= dk[0]
+    factor = 8 * np.pi ** 2 * CONST_me * CONST_c * dk * 100 / (CONST_h * 3 * mult)
+
+    n = material.refractive_index(dk)
+    chi_ed = (n ** 2 + 2) ** 2 / (9 * n)
+    chi_md = n
+
+    factor_ed = factor * chi_ed * 1e-24
+    factor_md = factor * chi_md * (CONST_h / (2 * np.pi * 2 * CONST_me * CONST_c)) ** 2
+    return factor_ed, factor_md
+
+
 def line_strengths(judd_ofelt, dipole, mult):
     """ Calculate and return matrices containing the line strengths of all electric and magnetic dipole
     transitions. Rows refer to final and columns to initial states. """
@@ -123,8 +141,8 @@ def line_strengths(judd_ofelt, dipole, mult):
 
     result_ed = (judd_ofelt["JO/2"] * dipole.U2 +
                  judd_ofelt["JO/4"] * dipole.U4 +
-                 judd_ofelt["JO/6"] * dipole.U6) * factor
-    result_md = dipole.LS * factor
+                 judd_ofelt["JO/6"] * dipole.U6) * factor[None, :]
+    result_md = dipole.LS * factor[None, :]
 
     # Remove diagonal elements
     np.fill_diagonal(result_ed, 0.0)
@@ -132,12 +150,11 @@ def line_strengths(judd_ofelt, dipole, mult):
 
     # Apply scaling factors
     result_ed *= CONST_e ** 2 / (4 * np.pi * CONST_eps0) * 1e-24
-    result_md *= 1 / (4 * np.pi * CONST_eps0) * (CONST_e * CONST_h / (2 * np.pi * 2 * CONST_me * CONST_c)) ** 2
+    result_md *= CONST_e ** 2 / (4 * np.pi * CONST_eps0) * (CONST_h / (2 * np.pi * 2 * CONST_me * CONST_c)) ** 2
     return Transition(ed=result_ed, md=result_md)
 
 
 def oscillator_strengths(judd_ofelt, dipole, mult, k, material):
-
     S = line_strengths(judd_ofelt, dipole, mult)
     dk = get_delta_k(k)
     n = material.refractive_index(dk)
@@ -152,7 +169,6 @@ def oscillator_strengths(judd_ofelt, dipole, mult, k, material):
 
 
 def radiative_rates(judd_ofelt, dipole, mult, k, material):
-
     S = line_strengths(judd_ofelt, dipole, mult)
     dk = get_delta_k(k)
     n = material.refractive_index(dk)

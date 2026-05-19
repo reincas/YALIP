@@ -149,7 +149,7 @@ class Levels:
         self.states = IntermediateList(self.base_states, energies, transform)
 
         # Matrix elements required to calculate dipole transition strengths
-        if jo is None or self.coupling == Coupling.SLJM:
+        if self.coupling == Coupling.SLJM:
             self.dipole = None
         else:
             self.dipole = Dipole(
