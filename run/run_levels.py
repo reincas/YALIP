@@ -60,14 +60,3 @@ if __name__ == "__main__":
     A = np.column_stack((A.ed[-2::-1, -1], A.md[-2::-1, -1]))
     np.set_printoptions(formatter=cast(Any, {'float': '{:7.0f}'.format}), linewidth=120)
     print(A)
-
-    print("**********")
-    x = np.array([ion.judd_ofelt[f"JO/{lam}"] for lam in (2, 4, 6)])
-    factor_ed, factor_md = jo_factors(ion.mult[0], ion.energies, material)
-    A = np.column_stack((reduced.U2[:, 0], reduced.U4[:, 0], reduced.U6[:, 0])) * factor_ed[:]
-    b = reduced.LS[1:, 0] * factor_md
-    x = np.array([ion.judd_ofelt[f"JO/{lam}"] for lam in (2, 4, 6)])
-    f = np.column_stack((A @ x, b)) * 1e8
-    np.set_printoptions(formatter=cast(Any, {'float': '{:7.1f}'.format}), linewidth=120)
-    print(f[1:,0])
-
