@@ -130,7 +130,6 @@ class LevelFit:
 
 
 def judd_ofelt_fit(ion, lines):
-
     assert isinstance(ion, Levels)
     assert isinstance(lines, list)
 
@@ -143,11 +142,11 @@ def judd_ofelt_fit(ion, lines):
     for i, (idx, f_meas, df_meas) in enumerate(lines):
         if isinstance(idx, int):
             b[i] = (f_meas - fmd[idx]) / df_meas
-            A[i,:] = fed[idx, :] / df_meas
+            A[i, :] = fed[idx, :] / df_meas
         else:
             idx = np.array(idx)
             b[i] = (f_meas - np.sum(fmd[idx])) / df_meas
-            A[i,:] = np.sum(fed[idx, :], axis=0) / df_meas
+            A[i, :] = np.sum(fed[idx, :], axis=0) / df_meas
 
     omega, residuals, rank, _ = np.linalg.lstsq(A, b, rcond=None)
     chi2 = residuals[0]
@@ -155,22 +154,38 @@ def judd_ofelt_fit(ion, lines):
 
     df_meas = np.array([line[2] for line in lines])
     sigma = float(np.sqrt(chi2 / np.sum(1 / df_meas ** 2))) * 1e8
-    judd_ofelt = {f"JO/{2*i+2}": value for i, value in enumerate(omega)}
+    judd_ofelt = {f"JO/{2 * i + 2}": value for i, value in enumerate(omega)}
     return judd_ofelt, sigma
 
 
-def str_compare(lines, states):
+def str_compare(lines, states, f_calc=None):
+    assert isinstance(lines, list)
+    size = set(len(line) for line in lines)
+    assert len(size) == 1
+    size = size.pop()
+    assert size in (4, 6)
+    has_strengths = True if size == 6 else False
+    if has_strengths:
+        assert f_calc is not None
+
     meas = len(states) * [{"type": "empty"}]
     for line in lines:
         idx, name, k_meas, dk_meas = line[:4]
         if isinstance(idx, (list, tuple)):
             meas[idx[0]] = {"type": "overlapped", "range": idx, "k": k_meas, "dk": dk_meas, "name": name[0]}
+            if has_strengths:
+                meas[idx[0]]["f"] = line[4]
+                meas[idx[0]]["df"] = line[5]
             for i, n in zip(idx[1:], name[1:]):
                 meas[i] = {"type": "continue", "name": n}
         else:
             meas[idx] = {"type": "normal", "k": k_meas, "dk": dk_meas, "name": name}
+            if has_strengths:
+                meas[idx]["f"] = line[4]
+                meas[idx]["df"] = line[5]
 
     result = []
+    f_meas = df_meas = fed_calc = fmd_calc = df_calc = None
     for i, state in enumerate(states):
         name_calc = state.short()
         level_type = meas[i]["type"]
@@ -180,6 +195,12 @@ def str_compare(lines, states):
             dk_meas = f"({meas[i]["dk"]:.0f})"
             k_calc = f"{state.energy:.0f}"
             dk_calc = f"{state.energy - meas[i]["k"]:.1f}"
+            if has_strengths:
+                f_meas = f"{meas[i]["f"]:.1f}"
+                df_meas = f"({meas[i]["df"]:.1f})"
+                fed_calc = f"{f_calc.ed[i]:.1f}"
+                fmd_calc = f"{f_calc.md[i]:.1f}"
+                df_calc = f"{f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]:.1f}"
         elif level_type == "overlapped":
             name_meas = meas[i]["name"]
             k_meas = f"{meas[i]["k"]:.0f}"
@@ -189,23 +210,49 @@ def str_compare(lines, states):
             k = np.sum(k * m) / np.sum(m)
             k_calc = f"{state.energy:.0f}"
             dk_calc = f"{k - meas[i]["k"]:.1f}"
+            if has_strengths:
+                f_meas = f"{meas[i]["f"]:.1f}"
+                df_meas = f"({meas[i]["df"]:.1f})"
+                f = sum([f_calc.ed[i] + f_calc.md[i] for i in meas[i]["range"]])
+                fed_calc = f"{f_calc.ed[i]:.1f}"
+                fmd_calc = f"{f_calc.md[i]:.1f}"
+                df_calc = f"{f - meas[i]["f"]:.1f}"
         elif level_type == "continue":
             name_meas = meas[i]["name"]
             k_meas = "..."
             dk_meas = ""
             k_calc = f"{state.energy:.0f}"
             dk_calc = "..."
+            if has_strengths:
+                f_meas = "..."
+                df_meas = ""
+                fed_calc = f"{f_calc.ed[i]:.1f}"
+                fmd_calc = f"{f_calc.md[i]:.1f}"
+                df_calc = "..."
         else:
             name_meas = ""
             k_meas = ""
             dk_meas = ""
             k_calc = f"{state.energy:.0f}"
             dk_calc = ""
-        result.append((str(i), name_meas, k_meas, dk_meas, k_calc, dk_calc, name_calc))
+            if has_strengths:
+                f_meas = ""
+                df_meas = ""
+                fed_calc = f"{f_calc.ed[i]:.1f}"
+                fmd_calc = f"{f_calc.md[i]:.1f}"
+                df_calc = ""
+        line = [str(i), name_meas, k_meas, dk_meas, k_calc, dk_calc, name_calc]
+        if has_strengths:
+            line = line[:-1] + [f_meas, df_meas, fed_calc, fmd_calc, df_calc] + line[-1:]
+        result.append(line)
 
     width = [max(map(len, values)) for values in zip(*result)]
-    fmt = "  ".join([f"{{:>{width[i]}s}}" for i in range(len(width))])
+    formats = [f"{{:>{width[i]}s}}" for i in range(len(width))]
     for values in result:
+        values = [fmt.format(value) for fmt, value in zip(formats, values)]
+        fmt = "{}  {} | {}  {}  {}  {} | {}"
+        if has_strengths:
+            fmt = "{}  {} | {}  {}  {}  {} | {}  {}  {}  {}  {} | {}"
         yield fmt.format(*values)
 
 
@@ -232,6 +279,7 @@ class Fit:
 
         # No fit yet
         self.levels = None
+        self.has_strengths = False
 
     @property
     def coupling(self):
@@ -267,7 +315,7 @@ class Fit:
         size = size.pop()
         assert size in (4, 6)
         self.lines = lines
-        k_lines = [[line[0], line[2], line[3]] for line in lines]
+        self.has_strengths = True if size == 6 else False
 
         # Copy values of radial integrals
         radial = self.radial_integrals.copy()
@@ -276,6 +324,7 @@ class Fit:
         if not isinstance(stages[0], (list, tuple)):
             stages = [stages]
 
+        k_lines = [[line[0], line[2], line[3]] for line in lines]
         opt = LevelFit(self.matrices, self.mult, k_lines)
         for i, names in enumerate(stages):
             raw_names = [n[1:] if n.startswith(":") else n for n in names]
@@ -297,7 +346,7 @@ class Fit:
             self.ion = Levels(self.config, opt.params, None, self.material)
 
             # Judd-Ofelt fit
-            if size == 6:
+            if self.has_strengths:
                 f_lines = [[line[0], line[4], line[5]] for line in lines]
                 judd_ofelt, df = judd_ofelt_fit(self.ion, f_lines)
                 self.ion.judd_ofelt = judd_ofelt
@@ -307,4 +356,14 @@ class Fit:
     def str_compare(self):
         assert self.lines is not None, "Run an energy level fit first!"
 
-        yield from str_compare(self.lines, self.ion.states)
+        lines = [line.copy() for line in self.lines]
+        if self.has_strengths:
+            f = self.ion.oscillator_strengths()
+            f.ed = f.ed[:, 0] * 1e8
+            f.md = f.md[:, 0] * 1e8
+            for i in range(len(lines)):
+                lines[i][4] *= 1e8
+                lines[i][5] *= 1e8
+        else:
+            f = None
+        yield from str_compare(lines, self.ion.states, f)

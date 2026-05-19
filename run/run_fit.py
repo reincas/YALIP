@@ -64,4 +64,4 @@ if __name__ == '__main__':
     opt = Fit(config, radial, material)
     opt.level_fit(lines, stages)
     for line in opt.str_compare():
-        logger.debug(line)
+        print(line)
