@@ -70,7 +70,10 @@ class LevelFit:
 
         # Collect comparison data
         results = []
-        for idx, _, k_meas, dk_meas in self.lines:
+        for line in self.lines:
+            idx = line[0]
+            k_meas = line[2]
+            dk_meas = line[3]
             if isinstance(idx, (list, tuple)):
                 idx = np.array(idx)
                 m = np.sum(mult[idx])
@@ -128,7 +131,8 @@ class LevelFit:
 
 def str_compare(lines, states):
     meas = len(states) * [{"type": "empty"}]
-    for idx, name, k_meas, dk_meas in lines:
+    for line in lines:
+        idx, name, k_meas, dk_meas = line[:4]
         if isinstance(idx, (list, tuple)):
             meas[idx[0]] = {"type": "overlapped", "range": idx, "k": k_meas, "dk": dk_meas, "name": name[0]}
             for i, n in zip(idx[1:], name[1:]):

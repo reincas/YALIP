@@ -53,6 +53,7 @@ if __name__ == '__main__':
     name = "Pr3+"
     radial = RADIAL[name]
     lines = MEAS
+    stages = STAGES
 
     jo = None
     material = MATERIAL["Pb:ZBLAN"]
@@ -61,6 +62,6 @@ if __name__ == '__main__':
     config = f"f{num}"
 
     opt = Fit(config, radial, jo, material)
-    opt.level_fit(lines, STAGES)
+    opt.level_fit(lines, stages)
     for line in opt.str_compare():
         logger.debug(line)
