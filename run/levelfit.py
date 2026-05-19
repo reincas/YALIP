@@ -9,7 +9,7 @@ import logging
 import numpy as np
 
 from yall import RADIAL, MATERIAL, LANTHANIDES, Intermediate, Coupling
-from yall.state import get_states
+from yall.states import get_states
 from yall.fit import LevelFit, format_params, str_compare
 
 logger = logging.getLogger("levelfit")

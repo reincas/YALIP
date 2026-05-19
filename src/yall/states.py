@@ -115,14 +115,16 @@ class StateList:
         return self.states[item]
 
     def short(self):
-        """ Return a list containing the short names of all states. """
+        """ Generate the short names of all states. """
 
-        return [state.short() for state in self.states]
+        for state in self.states:
+            yield state.short()
 
     def long(self):
-        """ Return a list containing the long names of all states. """
+        """ Generate the long names of all states. """
 
-        return [state.long() for state in self.states]
+        for state in self.states:
+            yield state.long()
 
     @property
     def state_space(self):
@@ -171,11 +173,10 @@ class StateProduct(State):
 
         quantum = []
         for single in self.quantum:
-            l = SPECTRAL[single["l"]]
+            l = SPECTRAL[int(single["l"])]
             ml = norm_magnetic(single["ml"])
-            s = single["s"]
             ms = norm_magnetic(single["ms"])
-            quantum.append(f"{l},{ml},{s},{ms}")
+            quantum.append(f"{l}_{ml}_{ms}")
         return " ".join(quantum)
 
     def __getitem__(self, item: int):
@@ -360,6 +361,11 @@ class StateListSLJ(StateList):
 ##########################################################################
 
 def get_states(config, coupling):
+    """ Return StateList object for the given coupling scheme. """
+
+    assert isinstance(config, str)
+    assert coupling in (Coupling.Product, Coupling.SLJM, Coupling.SLJ)
+
     # Update matrix data from the Zenodo repository
     update(config)
 
@@ -390,3 +396,56 @@ def get_states(config, coupling):
     reprs = reprs.copy()
     del reprs["Jz"]
     return StateListSLJ(config, values, chain, reprs, transform)
+
+
+class States:
+    """ Class of an electron configuration in a given coupling scheme providing access to the state objects and
+    matrices. """
+
+    def __init__(self, config, coupling):
+        """ Store electron configuration, coupling scheme, and a StateList object. """
+
+        assert isinstance(config, str)
+        assert isinstance(coupling, Coupling)
+
+        self.config = config
+        self.coupling = coupling
+        self.states = get_states(config, coupling)
+
+    def __len__(self):
+        """ Returns the number of states. """
+
+        return len(self.states.states)
+
+    def __iter__(self):
+        """ Generate each state. """
+
+        for state in self.states.states:
+            yield state
+
+    def __getitem__(self, item):
+        """ Return the state object with the given index. """
+
+        return self.states.states[item]
+
+    def short(self):
+        """ Generate the short names of all states. """
+
+        for state in self.states.states:
+            yield state.short()
+
+    def long(self):
+        """ generate the long names of all states. """
+
+        for state in self.states.states:
+            yield state.long()
+
+    def matrix(self, name):
+        """ Return the matrix of the tensor operator or the weighted sum of tensor operators. """
+
+        return self.states.matrix(name)
+
+    def reduced(self, name):
+        """ Return the reduced matrix of the given tensor operator or the weighted sum of tensor operators. """
+
+        return self.states.reduced(name)

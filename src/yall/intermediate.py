@@ -9,7 +9,7 @@ import numpy as np
 
 from .matrix import get_energies
 from .spectrum import line_strengths, Dipole, CONST_gs, oscillator_strengths, radiative_rates
-from .state import Coupling, State, StateList, get_states
+from .states import Coupling, State, StateList, get_states
 
 logger = logging.getLogger("yall.intermediate")
 
