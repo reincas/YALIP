@@ -203,7 +203,6 @@ class Fit:
 
         # No fit yet
         self.levels = None
-        self.ion
 
     @property
     def coupling(self):
