@@ -119,17 +119,21 @@ class IntermediateList(StateList):
 class Levels:
     """ Intermediate coupling class providing energy levels and radiative transitions. """
 
-    def __init__(self, config, radial, material):
+    def __init__(self, config, radial, jo=None, material=None):
 
         assert isinstance(config, str)
         assert isinstance(radial, dict)
+        assert isinstance(jo, dict)
 
         # Electron configuration
         self.config = config
 
-        # Radial parameters
+        # Radial integrals
         assert "base" in radial
-        self.radial = radial
+        self.radial_integrals = radial
+
+        # Judd-Ofelt parameters
+        self.judd_ofelt = jo
 
         # Material object providing spectral refractive indices
         self.material = material
@@ -141,11 +145,11 @@ class Levels:
         # Intermediate states
         state_space = self.base_states.state_space
         base_transform = self.base_states.transform
-        energies, transform = get_energies(self.config, self.radial, state_space, base_transform)
+        energies, transform = get_energies(self.config, self.radial_integrals, state_space, base_transform)
         self.states = IntermediateList(self.base_states, energies, transform)
 
         # Matrix elements required to calculate dipole transition strengths
-        if self.coupling == Coupling.SLJM:
+        if jo is None or self.coupling == Coupling.SLJM:
             self.dipole = None
         else:
             self.dipole = Dipole(
@@ -185,7 +189,7 @@ class Levels:
 
         if self.coupling == Coupling.SLJM:
             raise NotImplementedError("Not yet implemented for SLJM coupling!")
-        return line_strengths(self.radial, self.dipole, self.mult)
+        return line_strengths(self.judd_ofelt, self.dipole, self.mult)
 
     def oscillator_strengths(self):
         """ Calculate and return matrices containing the dimensionless oscillator strengths of all electric and
@@ -193,7 +197,7 @@ class Levels:
 
         if self.coupling == Coupling.SLJM:
             raise NotImplementedError("Not yet implemented for SLJM coupling!")
-        return oscillator_strengths(self.radial, self.dipole, self.mult, self.energies, self.material)
+        return oscillator_strengths(self.judd_ofelt, self.dipole, self.mult, self.energies, self.material)
 
     def radiative_rates(self):
         """ Calculate and return matrices containing the radiative emission rates in 1/s of all electric and magnetic
@@ -201,7 +205,7 @@ class Levels:
 
         if self.coupling == Coupling.SLJM:
             raise NotImplementedError("Not yet implemented for SLJM coupling!")
-        return radiative_rates(self.radial, self.dipole, self.mult, self.energies, self.material)
+        return radiative_rates(self.judd_ofelt, self.dipole, self.mult, self.energies, self.material)
 
     def str_levels(self, min_weight=0.0):
         """ Return a list containing an extensive description string for each state with energy and composition with

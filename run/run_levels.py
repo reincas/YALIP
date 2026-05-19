@@ -35,13 +35,13 @@ if __name__ == "__main__":
 
     material = MATERIAL["Pb:ZBLAN"]
     radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, "H2": 728.18,
-              "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67,
-              "JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
+              "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
+    jo = {"JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
 
     num = 2
     config = f"f{num}"
 
-    ion = Levels(config, radial, material)
+    ion = Levels(config, radial, jo, material)
     for state in ion.str_levels(min_weight=0.05):
         print(state)
 
