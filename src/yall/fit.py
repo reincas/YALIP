@@ -186,6 +186,8 @@ def str_compare(lines, states, f_calc=None):
 
     result = []
     f_meas = df_meas = fed_calc = fmd_calc = df_calc = None
+    k_sigma = inv_dk = 0.0
+    f_sigma = inv_df = 0.0
     for i, state in enumerate(states):
         name_calc = state.short()
         level_type = meas[i]["type"]
@@ -195,12 +197,16 @@ def str_compare(lines, states, f_calc=None):
             dk_meas = f"({meas[i]["dk"]:.0f})"
             k_calc = f"{state.energy:.0f}"
             dk_calc = f"{state.energy - meas[i]["k"]:.1f}"
+            k_sigma += ((state.energy - meas[i]["k"]) / meas[i]["dk"]) ** 2
+            inv_dk += 1 / meas[i]["dk"] ** 2
             if has_strengths:
                 f_meas = f"{meas[i]["f"]:.1f}"
                 df_meas = f"({meas[i]["df"]:.1f})"
                 fed_calc = f"{f_calc.ed[i]:.1f}"
                 fmd_calc = f"{f_calc.md[i]:.1f}"
                 df_calc = f"{f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]:.1f}"
+                f_sigma += ((f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]) / meas[i]["df"]) ** 2
+                inv_df += 1 / meas[i]["df"] ** 2
         elif level_type == "overlapped":
             name_meas = meas[i]["name"]
             k_meas = f"{meas[i]["k"]:.0f}"
@@ -210,6 +216,8 @@ def str_compare(lines, states, f_calc=None):
             k = np.sum(k * m) / np.sum(m)
             k_calc = f"{state.energy:.0f}"
             dk_calc = f"{k - meas[i]["k"]:.1f}"
+            k_sigma += ((k - meas[i]["k"]) / meas[i]["dk"]) ** 2
+            inv_dk += 1 / meas[i]["dk"] ** 2
             if has_strengths:
                 f_meas = f"{meas[i]["f"]:.1f}"
                 df_meas = f"({meas[i]["df"]:.1f})"
@@ -217,6 +225,8 @@ def str_compare(lines, states, f_calc=None):
                 fed_calc = f"{f_calc.ed[i]:.1f}"
                 fmd_calc = f"{f_calc.md[i]:.1f}"
                 df_calc = f"{f - meas[i]["f"]:.1f}"
+                f_sigma += ((f - meas[i]["f"]) / meas[i]["df"]) ** 2
+                inv_df += 1 / meas[i]["df"] ** 2
         elif level_type == "continue":
             name_meas = meas[i]["name"]
             k_meas = "..."
@@ -246,14 +256,42 @@ def str_compare(lines, states, f_calc=None):
             line = line[:-1] + [f_meas, df_meas, fed_calc, fmd_calc, df_calc] + line[-1:]
         result.append(line)
 
+    dk_mean = f"{np.mean([line[3] for line in lines]):.1f}"
+    k_sigma = f"{np.sqrt(k_sigma / inv_dk):.1f}"
+    df_mean = 0.0
+    if has_strengths:
+        df_mean = f"{np.mean([line[5] for line in lines]):.1f}"
+        f_sigma = f"{np.sqrt(f_sigma / inv_df):.1f}"
+
     width = [max(map(len, values)) for values in zip(*result)]
     formats = [f"{{:>{width[i]}s}}" for i in range(len(width))]
+    fmt = "{}  {} | {}  {}  {}  {} | {}"
+    if has_strengths:
+        fmt = "{}  {} | {}  {}  {}  {} | {}  {}  {}  {}  {} | {}"
+    values = [fmt.format(value) for fmt, value in zip(formats, len(formats) * [""])]
+    line = fmt.format(*values)
+    size = len(line)
+
+    values = ["", "", "kmeas", "", "kcalc", "", ""]
+    if has_strengths:
+        values = values[:-1] + ["fmeas", "", "fed", "fmd", ""] + values[-1:]
+    values = [fmt.format(value) for fmt, value in zip(formats, values)]
+    line = fmt.format(*values)
+    yield line
+
+    yield size * "-"
     for values in result:
         values = [fmt.format(value) for fmt, value in zip(formats, values)]
-        fmt = "{}  {} | {}  {}  {}  {} | {}"
-        if has_strengths:
-            fmt = "{}  {} | {}  {}  {}  {} | {}  {}  {}  {}  {} | {}"
-        yield fmt.format(*values)
+        line = fmt.format(*values)
+        yield line
+
+    yield size * "-"
+    values = ["", "", "", dk_mean, "", k_sigma, ""]
+    if has_strengths:
+        values = values[:-1] + ["", df_mean, "", "", f_sigma] + values[-1:]
+    values = [fmt.format(value) for fmt, value in zip(formats, values)]
+    line = fmt.format(*values)
+    yield line
 
 
 class Fit:
