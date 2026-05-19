@@ -4,15 +4,15 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 
-from functools import lru_cache
 import logging
 import numpy as np
 
 from .ameli import update
 from .fit import LevelFit, str_compare, format_params
-from .matrix import get_matrix, get_energies, get_reduced
-from .spectrum import Reduced, CONST_gs, line_strengths, Cauchy, Sellmeier, oscillator_strengths, radiative_rates
-from .state import Coupling, init_states, StateListJ, StateListM
+from .matrix import get_matrix, get_energies
+from .spectrum import Dipole, CONST_gs, line_strengths, Cauchy, Sellmeier, oscillator_strengths, radiative_rates
+# from .state import Coupling, init_states
+# from intermediate import StateListJ, StateListM
 
 logger = logging.getLogger("yall.lanthanide")
 
@@ -134,207 +134,206 @@ MATERIAL = {
 }
 
 
-class Lanthanide:
-    """ Lanthanide ion with given number of 4f electrons. It provides all energy levels and states in intermediate
-    coupling as well as the line strengths of all radiative electric and magnetic dipole transitions. """
-
-    def __init__(self, num: int, coupling=None, radial=None):
-        """ Initialize attributes, datastructures, and the file cache for the yall ion with given number of
-        4f electrons. Calculate energy levels and states in intermediate coupling based on the given dictionary of
-        radial integrals (default: Carnalls integrals for LaF3). The given coupling scheme may be SLJM or
-        SLJ (default). """
-
-        # Coupling scheme for the states. Default is SLJ.
-        self.coupling = coupling or Coupling.SLJ
-
-        assert isinstance(num, int)
-        assert 0 < num < 14
-        assert self.coupling in (Coupling.SLJ, Coupling.SLJM), f"Coupling {self.coupling} is not supported."
-
-        # Number of electrons, name and electron configuration of the lanthanide ion
-        self.num = num
-        self.name = f"{LANTHANIDES[num]}3+"
-        self.config = f"f{num}"
-
-        # Update matrix data from the Zenodo repository
-        update(self.config)
-
-        # Initialize the electron states for SLJM and SLJ coupling
-        self.state_dict = init_states(self.config)
-
-        # Calculate energy levels and states in intermediate coupling based on the given radial integrals
-        self.radial = None
-        self.energies = None
-        self.set_radial(radial or RADIAL[self.name])
-
-        self._reduced_ = None
-
-    def __enter__(self):
-        """ Entry hook of the content management protocol. """
-
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """ Exit hook of the content management protocol. """
-
-        self.close()
-        return False
-
-    def close(self):
-
-        pass
-
-    @lru_cache
-    def matrix(self, name, coupling=None):
-        """ Return Matrix object of the given operator in the given coupling scheme (default: Product). """
-
-        coupling = coupling or self.coupling
-        return get_matrix(name, self.config, coupling)
-
-    def reduced(self, name, coupling):
-        """ Return array of reduced matrix elements of the given operator in the coupling scheme SLJ or
-        intermediate. """
-
-        assert coupling in (Coupling.SLJ, Coupling.Intermediate)
-        matrix = get_reduced(name, self.config)
-        if coupling == Coupling.Intermediate:
-            V = self.states(coupling).transform
-            matrix = V.T @ matrix @ V
-        return matrix
-
-    def states(self, coupling=None):
-        """ Return StateList object of the given coupling scheme or the one selected when the Lanthanide object
-        was initialized. """
-
-        coupling = coupling or self.coupling
-        return self.state_dict[coupling.name]
-
-    def num_states(self, coupling=None):
-        """ Return number of states in the given coupling scheme or the one selected when the Lanthanide object
-        was initialized. """
-
-        return len(self.states(coupling))
-
-    def set_radial(self, radial):
-        """ Normalise and store new dictionary of radial integrals and use them to calculate all energy levels and
-        states in intermediate coupling. """
-
-        assert isinstance(radial, dict)
-
-        # Do nothing, if the given integrals are identical to the current ones
-        if radial == self.radial:
-            return
-
-        # Diagonalise the Hamiltonian and get energies and intermediate coupling vectors
-        self.radial = radial
-        self.energies, transform = get_energies(self.config, self.radial, self.states(self.coupling))
-
-        # Adjust the energy level of the ground state
-        if "base" in self.radial:
-            self.energies += self.radial["base"] - self.energies[0]
-
-        # Build and store the StateListJ object of the electron states in intermediate coupling
-        if self.coupling == Coupling.SLJ:
-            self.state_dict["Intermediate"] = StateListJ(self.state_dict["SLJ"], self.energies, transform)
-        else:
-            self.state_dict["Intermediate"] = StateListM(self.state_dict["SLJM"], self.energies, transform)
-
-        # Invalidate previously calculated reduced matrix elements
-        self._reduced_ = None
-
-    def level_fit(self, lines, opt_names, radial=None):
-        if self.coupling != Coupling.SLJ:
-            raise NotImplementedError(f"Energy level fit not yet implemented for {self.coupling} coupling!")
-
-        if radial is None:
-            radial = self.radial
-        radial = radial.copy()
-
-        mult = np.array(self.states(self.coupling).mult)
-        matrices = {name: self.matrix(name, self.coupling) for name in radial.keys() if name != "base"}
-
-        if not isinstance(opt_names[0], (list, tuple)):
-            opt_names = [opt_names]
-
-        opt = LevelFit({}, matrices, mult, lines)
-        for i, names in enumerate(opt_names):
-            raw_names = [n[1:] if n.startswith(":") else n for n in names]
-            assert len(set(raw_names)) == len(raw_names)
-            opt.params = {n: radial[n] for n in raw_names}
-
-            p = format_params(opt.params, 6)
-            dk = opt.get_sigma()
-            logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
-
-            names = [n for n in names if n != "base" and not n.startswith(":")]
-            opt.fit(names)
-            radial |= opt.params
-
-            p = format_params(opt.params, 6)
-            dk = opt.get_sigma()
-            logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
-
-
-        self.set_radial(opt.params)
-        return self.radial
-
-    def line_reduced(self):
-        """ Calculate and return all reduced matrix elements required for the calculation of line strengths of
-        radiative electric or magnetic dipole transitions if they were not yet calculated. Rows refer to final and
-        columns to initial states. """
-
-        if not self._reduced_:
-            self._reduced_ = Reduced(
-                U2=np.power(self.reduced("U/2", Coupling.Intermediate), 2),
-                U4=np.power(self.reduced("U/4", Coupling.Intermediate), 2),
-                U6=np.power(self.reduced("U/6", Coupling.Intermediate), 2),
-                LS=np.power(self.reduced([(1.0, "L"), (CONST_gs, "S")], Coupling.Intermediate), 2))
-        return self._reduced_
-
-    def line_strengths(self, judd_ofelt):
-        """ Calculate and return matrices containing the line strengths in Jm^3 of all electric and magnetic dipole
-        transitions. Rows refer to final and columns to initial states. """
-
-        # Multiply each matrix column with factor with J of the initial state
-        reduced = self.line_reduced()
-        states = self.states(Coupling.Intermediate)
-        J = list(map(float, states.J))
-        return line_strengths(judd_ofelt, reduced, J)
-
-    def oscillator_strengths(self, judd_ofelt, material):
-        """ Calculate and return matrices containing the dimensionless oscillator strengths of all electric and
-        magnetic dipole transitions. Rows refer to final and columns to initial states. """
-
-        # Multiply each matrix column with factor with J of the initial state
-        reduced = self.line_reduced()
-        states = self.states(Coupling.Intermediate)
-        J = list(map(float, states.J))
-        return oscillator_strengths(judd_ofelt, reduced, J, self.energies, material)
-
-    def radiative_rates(self, judd_ofelt, material):
-        """ Calculate and return matrices containing the radiative emission rates in 1/s of all electric and magnetic
-        dipole transitions. Rows refer to final and columns to initial states. """
-
-        # Multiply each matrix column with factor with J of the initial state
-        reduced = self.line_reduced()
-        states = self.states(Coupling.Intermediate)
-        J = list(map(float, states.J))
-        return radiative_rates(judd_ofelt, reduced, J, self.energies, material)
-
-    def str_levels(self, min_weight=0.0):
-        """ Return a list containing an extensive description string for each state with energy and composition with
-        weights in intermediate coupling. Only SLJ states with the given minimum weight are included. """
-
-        for state in self.states(Coupling.Intermediate):
-            yield f"  {state.energy:7.0f} | {state.long(min_weight)} >"
-
-    def str_compare_lines(self, lines):
-        if self.coupling != Coupling.SLJ:
-            raise NotImplementedError(f"Energy level comparison not yet implemented for {self.coupling} coupling!")
-
-        yield from str_compare(lines, self.states(Coupling.Intermediate))
-
-    def __str__(self):
-        """ Return a short string representation of this Lanthanide object. """
-
-        return f"{self.name} ({self.config})"
+# class Lanthanide:
+#     """ Lanthanide ion with given number of 4f electrons. It provides all energy levels and states in intermediate
+#     coupling as well as the line strengths of all radiative electric and magnetic dipole transitions. """
+#
+#     def __init__(self, num: int, coupling=None, radial=None):
+#         """ Initialize attributes, datastructures, and the file cache for the yall ion with given number of
+#         4f electrons. Calculate energy levels and states in intermediate coupling based on the given dictionary of
+#         radial integrals (default: Carnalls integrals for LaF3). The given coupling scheme may be SLJM or
+#         SLJ (default). """
+#
+#         # Coupling scheme for the states. Default is SLJ.
+#         self.coupling = coupling or Coupling.SLJ
+#
+#         assert isinstance(num, int)
+#         assert 0 < num < 14
+#         assert self.coupling in (Coupling.SLJ, Coupling.SLJM), f"Coupling {self.coupling} is not supported."
+#
+#         # Number of electrons, name and electron configuration of the lanthanide ion
+#         self.num = num
+#         self.name = f"{LANTHANIDES[num]}3+"
+#         self.config = f"f{num}"
+#
+#         # Update matrix data from the Zenodo repository
+#         update(self.config)
+#
+#         # Initialize the electron states for SLJM and SLJ coupling
+#         self.state_dict = init_states(self.config)
+#
+#         # Calculate energy levels and states in intermediate coupling based on the given radial integrals
+#         self.radial = None
+#         self.energies = None
+#         self.set_radial(radial or RADIAL[self.name])
+#
+#         self._reduced_ = None
+#
+#     def __enter__(self):
+#         """ Entry hook of the content management protocol. """
+#
+#         return self
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         """ Exit hook of the content management protocol. """
+#
+#         self.close()
+#         return False
+#
+#     def close(self):
+#
+#         pass
+#
+#     def matrix(self, name, coupling=None):
+#         """ Return Matrix object of the given operator in the given coupling scheme (default: Product). """
+#
+#         coupling = coupling or self.coupling
+#         return get_matrix(name, self.config, coupling)
+#
+#     def reduced(self, name, coupling):
+#         """ Return array of reduced matrix elements of the given operator in the coupling scheme SLJ or
+#         intermediate. """
+#
+#         assert coupling in (Coupling.SLJ, Coupling.Intermediate)
+#         matrix = get_reduced(name, self.config)
+#         if coupling == Coupling.Intermediate:
+#             V = self.states(coupling).transform
+#             matrix = V.T @ matrix @ V
+#         return matrix
+#
+#     def states(self, coupling=None):
+#         """ Return StateList object of the given coupling scheme or the one selected when the Lanthanide object
+#         was initialized. """
+#
+#         coupling = coupling or self.coupling
+#         return self.state_dict[coupling.name]
+#
+#     def num_states(self, coupling=None):
+#         """ Return number of states in the given coupling scheme or the one selected when the Lanthanide object
+#         was initialized. """
+#
+#         return len(self.states(coupling))
+#
+#     def set_radial(self, radial):
+#         """ Normalise and store new dictionary of radial integrals and use them to calculate all energy levels and
+#         states in intermediate coupling. """
+#
+#         assert isinstance(radial, dict)
+#
+#         # Do nothing, if the given integrals are identical to the current ones
+#         if radial == self.radial:
+#             return
+#
+#         # Diagonalise the Hamiltonian and get energies and intermediate coupling vectors
+#         self.radial = radial
+#         self.energies, transform = get_energies(self.config, self.radial, self.states(self.coupling))
+#
+#         # Adjust the energy level of the ground state
+#         if "base" in self.radial:
+#             self.energies += self.radial["base"] - self.energies[0]
+#
+#         # Build and store the StateListJ object of the electron states in intermediate coupling
+#         if self.coupling == Coupling.SLJ:
+#             self.state_dict["Intermediate"] = StateListJ(self.state_dict["SLJ"], self.energies, transform)
+#         else:
+#             self.state_dict["Intermediate"] = StateListM(self.state_dict["SLJM"], self.energies, transform)
+#
+#         # Invalidate previously calculated reduced matrix elements
+#         self._reduced_ = None
+#
+#     def level_fit(self, lines, opt_names, radial=None):
+#         if self.coupling != Coupling.SLJ:
+#             raise NotImplementedError(f"Energy level fit not yet implemented for {self.coupling} coupling!")
+#
+#         if radial is None:
+#             radial = self.radial
+#         radial = radial.copy()
+#
+#         mult = np.array(self.states(self.coupling).mult)
+#         matrices = {name: self.matrix(name, self.coupling) for name in radial.keys() if name != "base"}
+#
+#         if not isinstance(opt_names[0], (list, tuple)):
+#             opt_names = [opt_names]
+#
+#         opt = LevelFit({}, matrices, mult, lines)
+#         for i, names in enumerate(opt_names):
+#             raw_names = [n[1:] if n.startswith(":") else n for n in names]
+#             assert len(set(raw_names)) == len(raw_names)
+#             opt.params = {n: radial[n] for n in raw_names}
+#
+#             p = format_params(opt.params, 6)
+#             dk = opt.get_sigma()
+#             logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
+#
+#             names = [n for n in names if n != "base" and not n.startswith(":")]
+#             opt.fit(names)
+#             radial |= opt.params
+#
+#             p = format_params(opt.params, 6)
+#             dk = opt.get_sigma()
+#             logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
+#
+#
+#         self.set_radial(opt.params)
+#         return self.radial
+#
+#     def line_reduced(self):
+#         """ Calculate and return all reduced matrix elements required for the calculation of line strengths of
+#         radiative electric or magnetic dipole transitions if they were not yet calculated. Rows refer to final and
+#         columns to initial states. """
+#
+#         if not self._reduced_:
+#             self._reduced_ = Dipole(
+#                 U2=np.power(self.reduced("U/2", Coupling.Intermediate), 2),
+#                 U4=np.power(self.reduced("U/4", Coupling.Intermediate), 2),
+#                 U6=np.power(self.reduced("U/6", Coupling.Intermediate), 2),
+#                 LS=np.power(self.reduced([(1.0, "L"), (CONST_gs, "S")], Coupling.Intermediate), 2))
+#         return self._reduced_
+#
+#     def line_strengths(self, judd_ofelt):
+#         """ Calculate and return matrices containing the line strengths in Jm^3 of all electric and magnetic dipole
+#         transitions. Rows refer to final and columns to initial states. """
+#
+#         # Multiply each matrix column with factor with J of the initial state
+#         reduced = self.line_reduced()
+#         states = self.states(Coupling.Intermediate)
+#         J = list(map(float, states.J))
+#         return line_strengths(judd_ofelt, reduced, J)
+#
+#     def oscillator_strengths(self, judd_ofelt, material):
+#         """ Calculate and return matrices containing the dimensionless oscillator strengths of all electric and
+#         magnetic dipole transitions. Rows refer to final and columns to initial states. """
+#
+#         # Multiply each matrix column with factor with J of the initial state
+#         reduced = self.line_reduced()
+#         states = self.states(Coupling.Intermediate)
+#         J = list(map(float, states.J))
+#         return oscillator_strengths(judd_ofelt, reduced, J, self.energies, material)
+#
+#     def radiative_rates(self, judd_ofelt, material):
+#         """ Calculate and return matrices containing the radiative emission rates in 1/s of all electric and magnetic
+#         dipole transitions. Rows refer to final and columns to initial states. """
+#
+#         # Multiply each matrix column with factor with J of the initial state
+#         reduced = self.line_reduced()
+#         states = self.states(Coupling.Intermediate)
+#         J = list(map(float, states.J))
+#         return radiative_rates(judd_ofelt, reduced, J, self.energies, material)
+#
+#     def str_levels(self, min_weight=0.0):
+#         """ Return a list containing an extensive description string for each state with energy and composition with
+#         weights in intermediate coupling. Only SLJ states with the given minimum weight are included. """
+#
+#         for state in self.states(Coupling.Intermediate):
+#             yield f"  {state.energy:7.0f} | {state.long(min_weight)} >"
+#
+#     def str_compare_lines(self, lines):
+#         if self.coupling != Coupling.SLJ:
+#             raise NotImplementedError(f"Energy level comparison not yet implemented for {self.coupling} coupling!")
+#
+#         yield from str_compare(lines, self.states(Coupling.Intermediate))
+#
+#     def __str__(self):
+#         """ Return a short string representation of this Lanthanide object. """
+#
+#         return f"{self.name} ({self.config})"

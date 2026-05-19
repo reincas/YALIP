@@ -6,7 +6,11 @@
 
 import logging
 
-from yall import Coupling, Lanthanide, RADIAL
+import numpy as np
+
+from yall import RADIAL, MATERIAL, LANTHANIDES, Intermediate, Coupling
+from yall.state import get_states
+from yall.fit import LevelFit, format_params, str_compare
 
 logger = logging.getLogger("levelfit")
 
@@ -47,18 +51,52 @@ def init_logger(file_name=None, level=logging.INFO):
     root.addHandler(console_h)
 
 
+def level_fit(base_states, radial, lines, opt_names):
+    if base_states.coupling != Coupling.SLJ:
+        raise NotImplementedError(f"Energy level fit not yet implemented for {base_states.coupling} coupling!")
+
+    radial = radial.copy()
+
+    mult = np.array(base_states.mult)
+    matrices = {name: base_states.matrix(name) for name in radial.keys() if name != "base"}
+
+    if not isinstance(opt_names[0], (list, tuple)):
+        opt_names = [opt_names]
+
+    opt = LevelFit({}, matrices, mult, lines)
+    for i, names in enumerate(opt_names):
+        raw_names = [n[1:] if n.startswith(":") else n for n in names]
+        assert len(set(raw_names)) == len(raw_names)
+        opt.params = {n: radial[n] for n in raw_names}
+
+        p = format_params(opt.params, 6)
+        dk = opt.get_sigma()
+        logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
+
+        names = [n for n in names if n != "base" and not n.startswith(":")]
+        opt.fit(names)
+        radial |= opt.params
+
+        p = format_params(opt.params, 6)
+        dk = opt.get_sigma()
+        logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
+
+    return opt.params
+
+
 if __name__ == '__main__':
     init_logger(level=logging.DEBUG)
 
-    num = 2
-    coupling = Coupling.SLJ
-    radial = RADIAL["Pr3+"]
-    # radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, "H2": 728.18,
-    #     "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
+    name = "Pr3+"
+    radial = RADIAL[name]
     lines = KMEAS
+    material = MATERIAL["Pb:ZBLAN"]
 
-    with Lanthanide(num, coupling, radial) as ion:
+    num = LANTHANIDES.index(name[:2])
+    config = f"f{num}"
+    states = get_states(config, Coupling.SLJ)
 
-        opt_params = ion.level_fit(lines, STAGE, radial)
-        for line in ion.str_compare_lines(lines):
-            logger.debug(line)
+    opt_params = level_fit(states, radial, lines, STAGE)
+    ion = Intermediate(config, opt_params, material)
+    for line in str_compare(lines, ion.states):
+        logger.debug(line)

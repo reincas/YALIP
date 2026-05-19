@@ -23,7 +23,6 @@ import logging
 import numpy as np
 
 from .ameli import MATRIX_PATH, get_ameli_matrix
-from .state import Coupling, StateList
 
 logger = logging.getLogger("yall.matrix")
 
@@ -40,8 +39,8 @@ ALT_NAMES = {
     "H3/0": "LL",
     "H3/1": "C2",
     "H3/2": "CR",
-    "H5fix": [(1.0, "H5/0"), (0.56, "H5/2"), (0.38, "H5/4")],
-    "H6fix": [(1.0, "H6/2"), (0.75, "H6/4"), (0.50, "H6/6")],
+    "H5fix": {"H5/0": 1.0, "H5/2": 0.56, "H5/4": 0.38},
+    "H6fix": {"H6/2": 1.0, "H6/4": 0.75, "H6/6": 0.50},
 }
 
 
@@ -52,14 +51,9 @@ def normalise_radial(radial):
     keys = list(radial.keys())
     new_radial = {}
 
-    # No conversion for parameter "base"
-    if "base" in keys:
-        new_radial["base"] = radial["base"]
-        keys.remove("base")
-
     # No conversion for standard parameters
     for key in list(keys):
-        if key[:2] in ("H1", "H2", "H3", "H4", "H5", "H6") or key[:3] == "Hcf":
+        if key == "base" or key[:2] in ("JO", "H1", "H2", "H3", "H4", "H5", "H6") or key[:3] == "Hcf":
             new_radial[key] = radial[key]
             keys.remove(key)
 
@@ -125,25 +119,25 @@ def normalise_radial(radial):
     return new_radial
 
 
-def get_energies(config:str, radial: dict, states: StateList):
+def get_energies(config, radial, state_space, base_transform):
     """ Build and diagonalize the matrix of a perturbation hamiltonian operator as linear combination of the
     interaction hamiltonians and factors specified in the dictionary radial in the given coupling scheme."""
 
-    assert states.coupling in (Coupling.SLJM, Coupling.SLJ)
+    assert state_space in ("sljm", "slj")
     assert isinstance(radial, dict)
 
     if any(k.startswith("Hcf/") for k in radial.keys()):
-        assert states.coupling == Coupling.SLJM, "Crystal field parameters require SLJM coupling!"
+        assert state_space == "sljm", "Crystal field parameters require SLJM coupling!"
 
     # Build linear combination specified in the radial dictionary
     radial = normalise_radial(radial)
-    names = [(v, k) for k, v in radial.items() if k != "base"]
+    names = {k: v for k, v in radial.items() if k != "base" and not k.startswith("JO/")}
 
     # Build the perturbation Hamiltonian
-    if states.coupling == Coupling.SLJM:
-        H = get_matrix(names, config, Coupling.Product)
+    if state_space == "sljm":
+        H = get_matrix(names, config, "product")
     else:
-        H = get_matrix(names, config, Coupling.SLJ)
+        H = get_matrix(names, config, "slj")
 
     # Diagonalise the Hamiltonian and get energies and intermediate coupling vectors
     energies, transform = np.linalg.eigh(H)
@@ -153,59 +147,36 @@ def get_energies(config:str, radial: dict, states: StateList):
         energies += radial["base"] - energies[0]
 
     # Back transformation to SLJM states
-    if states.coupling == Coupling.SLJM:
-        transform = states.transform.T @ transform
+    if state_space == "sljm":
+        transform = base_transform.T @ transform
 
     # Return the total hamiltonian as Matrix object in the given coupling scheme
     return energies, transform
 
 
-def get_matrix(name, config, coupling):
-    """ Return the matrix of the tensor operator, or the weighted sum of tensor operators in the coupling scheme. """
+##########################################################################
+# AMELI interface
+##########################################################################
 
-    assert isinstance(coupling, Coupling)
-    assert coupling in (Coupling.Product, Coupling.SLJM, Coupling.SLJ)
+def get_matrix(name, config, state_space):
+    """ Return the matrix of the tensor operator or the weighted sum of tensor operators in the coupling scheme. """
+
+    assert isinstance(name, (str, dict))
+    assert isinstance(config, str)
+    assert isinstance(state_space, str)
 
     path = MATRIX_PATH / config
     if not path.exists():
         path.mkdir(parents=True)
 
-    if isinstance(name, list):
+    if isinstance(name, dict):
         matrix = 0.0
-        for sub_weight, sub_name in name:
-            matrix += sub_weight * get_matrix(sub_name, config, coupling)
+        for sub_name, sub_weight in name.items():
+            matrix += sub_weight * get_matrix(sub_name, config, state_space)
         return matrix
 
     if name in ALT_NAMES:
-        return get_matrix(ALT_NAMES[name], config, coupling)
-
-    state_space = coupling.name.lower()
-    vault = path / f"{state_space}.hdf5"
-    with h5py.File(vault, "a") as fp:
-        if name not in fp.keys():
-            matrix = get_ameli_matrix(name, config, state_space)
-            fp.create_dataset(name, data=matrix)
-        else:
-            matrix = np.array(fp[name])
-    return matrix
-
-
-def get_reduced(name, config):
-    """ Return the matrix of reduced elements of the given tensor operator, or the weighted sum of tensor operators. """
-
-    state_space = "slj_reduced"
-    path = MATRIX_PATH / config
-    if not path.exists():
-        path.mkdir(parents=True)
-
-    if isinstance(name, list):
-        matrix = 0.0
-        for sub_weight, sub_name in name:
-            matrix += sub_weight * get_reduced(sub_name, config)
-        return matrix
-
-    if name in ALT_NAMES:
-        return get_reduced(ALT_NAMES[name], config)
+        return get_matrix(ALT_NAMES[name], config, state_space)
 
     vault = path / f"{state_space}.hdf5"
     with h5py.File(vault, "a") as fp:

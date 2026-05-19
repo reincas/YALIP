@@ -8,7 +8,7 @@ import logging
 import numpy as np
 from typing import cast, Any
 
-from yall import Lanthanide, Coupling, MATERIAL
+from yall import MATERIAL, Intermediate
 
 logger = logging.getLogger("run")
 
@@ -35,30 +35,27 @@ if __name__ == "__main__":
 
     material = MATERIAL["Pb:ZBLAN"]
     radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, "H2": 728.18,
-              "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
-    judd_ofelt = {"JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
+              "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67,
+              "JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
 
     num = 2
     config = f"f{num}"
-    coupling = Coupling.SLJ
 
-    with Lanthanide(num, coupling, radial) as ion:
-        print(ion)
-        for state in ion.str_levels(min_weight=0.05):
-            print(state)
+    ion = Intermediate(config, radial, material)
+    for state in ion.str_levels(min_weight=0.05):
+        print(state)
 
-        reduced = ion.line_reduced()
-        R = np.column_stack((reduced.U2[1:, 0], reduced.U4[1:, 0], reduced.U6[1:, 0], reduced.LS[1:, 0]))
-        np.set_printoptions(formatter=cast(Any, {'float': '{:7.4f}'.format}), linewidth=120)
-        print(R)
+    reduced = ion.dipole
+    R = np.column_stack((reduced.U2[1:, 0], reduced.U4[1:, 0], reduced.U6[1:, 0], reduced.LS[1:, 0]))
+    np.set_printoptions(formatter=cast(Any, {'float': '{:7.4f}'.format}), linewidth=120)
+    print(R)
 
-        f = ion.oscillator_strengths(judd_ofelt, material)
-        f = np.column_stack((f.ed[1:, 0], f.md[1:, 0])) * 1e8
-        np.set_printoptions(formatter=cast(Any, {'float': '{:7.1f}'.format}), linewidth=120)
-        print(f)
+    f = ion.oscillator_strengths()
+    f = np.column_stack((f.ed[1:, 0], f.md[1:, 0])) * 1e8
+    np.set_printoptions(formatter=cast(Any, {'float': '{:7.1f}'.format}), linewidth=120)
+    print(f)
 
-        A = ion.radiative_rates(judd_ofelt, material)
-        A = np.column_stack((A.ed[-2::-1, -1], A.md[-2::-1, -1]))
-        np.set_printoptions(formatter=cast(Any, {'float': '{:7.0f}'.format}), linewidth=120)
-        print(A)
-        #print(A.md)
+    A = ion.radiative_rates()
+    A = np.column_stack((A.ed[-2::-1, -1], A.md[-2::-1, -1]))
+    np.set_printoptions(formatter=cast(Any, {'float': '{:7.0f}'.format}), linewidth=120)
+    print(A)

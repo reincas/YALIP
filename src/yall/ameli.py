@@ -8,25 +8,25 @@
 # matrices on Zenodo.
 #
 ##########################################################################
+
 import json
 from datetime import datetime, timedelta
-from functools import total_ordering
+from functools import total_ordering, lru_cache
+import h5py
 import io
 import logging
 import math
+import numpy as np
 from pathlib import Path
+from platformdirs import user_cache_dir
 import requests
 import tempfile
 import zipfile
 
-import numpy as np
-import h5py
-from requests import Timeout
-
 logger = logging.getLogger("yall.ameli")
 
-AMELI_PATH = Path(__file__).resolve().parent / "ameli"
-MATRIX_PATH = Path(__file__).resolve().parent / "matrix"
+AMELI_PATH = Path(user_cache_dir(appname="YALL", appauthor="REINCAS")) / "ameli"
+MATRIX_PATH = Path(user_cache_dir(appname="YALL", appauthor="REINCAS")) / "matrix"
 
 ZENODO_API = "https://zenodo.org/api"
 ZENODO_RECORD = f"{ZENODO_API}/records"
@@ -117,7 +117,7 @@ def get_zenodo_version(concept_id):
     try:
         response = requests.get(url, timeout=3)
         response.raise_for_status()
-    except Timeout:
+    except requests.Timeout:
         logger.info(f"Zenodo timeout on record {concept_id}")
         return None
     except Exception as e:
@@ -210,6 +210,7 @@ def remove_vault(config):
             file.unlink()
         path.rmdir()
     logger.debug(f"Local matrix vault for configuration {config} removed")
+
 
 def update(config, force=False):
     logger.debug(f"Updating configuration {config} with force={force}")
@@ -330,11 +331,6 @@ def matrix_path(config, state_space, name):
     return path
 
 
-# def matrix_mtime(config_name, state_space, name):
-#     path = matrix_path(config_name, state_space, name)
-#     return path.stat().st_mtime
-
-
 def read_matrix(path, item):
     """ Return a float representation of the given AMELI matrix. """
 
@@ -360,12 +356,6 @@ def read_matrix(path, item):
     return matrix
 
 
-def get_ameli_matrix(name, config, state_space):
-    assert state_space in ("slj_reduced", "slj", "sljm", "product")
-    path = matrix_path(config, state_space, name)
-    return read_matrix(path, "data/matrix.hdf5")
-
-
 def read_indices(path, item):
     """ Return a float representation of the given AMELI matrix. """
 
@@ -383,7 +373,19 @@ def read_json(path, item):
             return json.loads(f.read())
 
 
-def read_transform(config):
+##########################################################################
+# AMELI interface
+##########################################################################
+
+@lru_cache
+def get_ameli_matrix(name, config, state_space):
+    assert state_space in ("slj_reduced", "slj", "sljm", "product")
+    path = matrix_path(config, state_space, name)
+    return read_matrix(path, "data/matrix.hdf5")
+
+
+@lru_cache
+def get_ameli_transform(config):
     path = AMELI_PATH / config / "transform.zdc"
     meta = read_json(path, "data/transform.json")
     transform = {

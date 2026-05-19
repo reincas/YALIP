@@ -21,7 +21,7 @@ CONST_gs = 2.00231924
 
 
 @dataclass
-class Reduced:
+class Dipole:
     """ Dataclass containing the reduced matrix elements required for the calculation of the line strength
     of electric and magnetic dipole transitions. """
 
@@ -110,21 +110,21 @@ class Sellmeier:
         return n
 
 
-def line_strengths(judd_ofelt, reduced, J):
+def line_strengths(judd_ofelt, dipole, mult):
     """ Calculate and return matrices containing the line strengths of all electric and magnetic dipole
     transitions. Rows refer to final and columns to initial states. """
 
     assert isinstance(judd_ofelt, dict)
-    assert isinstance(reduced, Reduced)
-    assert isinstance(J, list)
+    assert isinstance(dipole, Dipole)
+    assert isinstance(mult, list)
 
     # Multiply each matrix column with factor with J of the initial state
-    invJi = np.array([1 / (3 * (2 * float(j) + 1)) for j in J])
+    factor = np.array([1 / (3 * m) for m in mult])
 
-    result_ed = (judd_ofelt["JO/2"] * reduced.U2 +
-                 judd_ofelt["JO/4"] * reduced.U4 +
-                 judd_ofelt["JO/6"] * reduced.U6) * invJi
-    result_md = reduced.LS * invJi
+    result_ed = (judd_ofelt["JO/2"] * dipole.U2 +
+                 judd_ofelt["JO/4"] * dipole.U4 +
+                 judd_ofelt["JO/6"] * dipole.U6) * factor
+    result_md = dipole.LS * factor
 
     # Remove diagonal elements
     np.fill_diagonal(result_ed, 0.0)
@@ -136,9 +136,9 @@ def line_strengths(judd_ofelt, reduced, J):
     return Transition(ed=result_ed, md=result_md)
 
 
-def oscillator_strengths(judd_ofelt, reduced, J, k, material):
+def oscillator_strengths(judd_ofelt, dipole, mult, k, material):
 
-    S = line_strengths(judd_ofelt, reduced, J)
+    S = line_strengths(judd_ofelt, dipole, mult)
     dk = get_delta_k(k)
     n = material.refractive_index(dk)
     chi_ed = (n ** 2 + 2) ** 2 / (9 * n)
@@ -151,9 +151,9 @@ def oscillator_strengths(judd_ofelt, reduced, J, k, material):
     return Transition(ed=result_ed, md=result_md)
 
 
-def radiative_rates(judd_ofelt, reduced, J, k, material):
+def radiative_rates(judd_ofelt, dipole, mult, k, material):
 
-    S = line_strengths(judd_ofelt, reduced, J)
+    S = line_strengths(judd_ofelt, dipole, mult)
     dk = get_delta_k(k)
     n = material.refractive_index(dk)
     chi_ed = n * (n ** 2 + 2) ** 2 / 9
