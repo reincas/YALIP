@@ -73,6 +73,9 @@ class Cauchy:
              self.D * lam ** 2 +
              self.E * lam ** 4)
 
+        # Clip unrealistic values
+        n = np.clip(n, 1.0, 3.0)
+
         # Return refractive index
         if np.isscalar(k):
             return float(n)
@@ -102,6 +105,9 @@ class Sellmeier:
             if self.B[i] != 0:
                 n2 += (self.B[i] * lam2) / (lam2 - self.C2[i])
         n = np.sqrt(n2)
+
+        # Clip unrealistic values
+        n = np.clip(n, 1.0, 3.0)
 
         # Return refractive index
         if np.isscalar(k):
@@ -151,6 +157,9 @@ def line_strengths(judd_ofelt, dipole, mult):
     # Apply scaling factors
     result_ed *= CONST_e ** 2 / (4 * np.pi * CONST_eps0) * 1e-24
     result_md *= CONST_e ** 2 / (4 * np.pi * CONST_eps0) * (CONST_h / (2 * np.pi * 2 * CONST_me * CONST_c)) ** 2
+
+    np.fill_diagonal(result_ed, 0)
+    np.fill_diagonal(result_md, 0)
     return Transition(ed=result_ed, md=result_md)
 
 
@@ -165,6 +174,9 @@ def oscillator_strengths(judd_ofelt, dipole, mult, k, material):
 
     result_ed = factor * chi_ed * S.ed
     result_md = factor * chi_md * S.md
+
+    np.fill_diagonal(result_ed, 0)
+    np.fill_diagonal(result_md, 0)
     return Transition(ed=result_ed, md=result_md)
 
 
@@ -178,4 +190,6 @@ def radiative_rates(judd_ofelt, dipole, mult, k, material):
 
     result_ed = factor * chi_ed * S.ed
     result_md = factor * chi_md * S.md
+    result_ed = np.triu(result_ed, k=1)
+    result_md = np.triu(result_md, k=1)
     return Transition(ed=result_ed, md=result_md)
