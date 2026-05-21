@@ -31,10 +31,6 @@ def init_logger(file_name=None, level=logging.INFO):
 if __name__ == "__main__":
     init_logger(level=logging.DEBUG)
 
-    radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, "H2": 728.18,
-              "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67,
-              "JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
-
     num = 2
     config = f"f{num}"
     coupling = Coupling.SLJM
@@ -46,6 +42,6 @@ if __name__ == "__main__":
     logger.info(f"Matrix shape: {matrix.shape}")
 
     logger.info(f"List of {coupling.name} coupling states:")
-    for state in states.long():
+    for state in states:
         logger.info(f"    {state}")
 

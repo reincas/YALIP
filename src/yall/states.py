@@ -68,6 +68,21 @@ class State:
     def state_space(self):
         return self.coupling.name.lower()
 
+    def short(self):
+        """ Return a short string representation of the state. """
+
+        raise NotImplementedError()
+
+    def long(self):
+        """ Return a short string representation of the state. """
+
+        raise NotImplementedError()
+
+    def __str__(self):
+        """ Return a long string representation of the state. """
+
+        return self.long()
+
 
 class StateList:
     """ Abstract class for a list of electron states in a certain coupling scheme. """
@@ -184,11 +199,6 @@ class StateProduct(State):
 
         return self.quantum[item]
 
-    def __str__(self):
-        """ Return a long string representation of the state. """
-
-        return self.long()
-
 
 class StateListProduct(StateList):
     """ Class containing a list of StateProduct objects representing an electron configuration. """
@@ -245,11 +255,6 @@ class StateSLJM(State):
         if sym not in self.quantum:
             raise KeyError(f"Unknown symmetry {sym}!")
         return self.quantum[sym]
-
-    def __str__(self):
-        """ Return a long string representation of the state. """
-
-        return self.long()
 
 
 class StateListSLJM(StateList):
@@ -321,11 +326,6 @@ class StateSLJ(State):
         if sym not in self.quantum:
             raise KeyError(f"Unknown symmetry {sym}!")
         return self.quantum[sym]
-
-    def __str__(self):
-        """ Return a long string representation of the state. """
-
-        return self.long()
 
 
 class StateListSLJ(StateList):
@@ -424,18 +424,6 @@ class States:
         """ Return the state object with the given index. """
 
         return self.states.states[item]
-
-    def short(self):
-        """ Generate the short names of all states. """
-
-        for state in self.states.states:
-            yield state.short()
-
-    def long(self):
-        """ generate the long names of all states. """
-
-        for state in self.states.states:
-            yield state.long()
 
     def matrix(self, name):
         """ Return the matrix of the tensor operator or the weighted sum of tensor operators. """
