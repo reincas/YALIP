@@ -238,8 +238,9 @@ class Levels:
             raise NotImplementedError("Not yet implemented for SLJM coupling!")
         A = self.radiative_rates()
         A = A.ed + A.md
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide='ignore', invalid='ignore'):
             beta = A / np.sum(A, axis=0, keepdims=True)
+        beta = np.triu(beta, k=1)
         return beta
 
     def str_levels(self, min_weight=0.0):
