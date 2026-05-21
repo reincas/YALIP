@@ -219,6 +219,29 @@ class Levels:
             raise NotImplementedError("Not yet implemented for SLJM coupling!")
         return radiative_rates(self.judd_ofelt, self.dipole, self.mult, self.energies, self.material)
 
+    def life_times(self):
+        """ Calculate and return the radiative lifetime of each state in s. """
+
+        if self.coupling == Coupling.SLJM:
+            raise NotImplementedError("Not yet implemented for SLJM coupling!")
+        A = self.radiative_rates()
+        A = A.ed + A.md
+        with np.errstate(divide='ignore'):
+            tau = 1.0 / np.sum(A, axis=0)
+        return tau
+
+    def branching_ratios(self):
+        """ Calculate and return matrices containing the radiative branching ratios of all dipole transitions.
+        Rows refer to final and columns to initial states. """
+
+        if self.coupling == Coupling.SLJM:
+            raise NotImplementedError("Not yet implemented for SLJM coupling!")
+        A = self.radiative_rates()
+        A = A.ed + A.md
+        with np.errstate(divide='ignore'):
+            beta = A / np.sum(A, axis=0, keepdims=True)
+        return beta
+
     def str_levels(self, min_weight=0.0):
         """ Return a list containing an extensive description string for each state with energy and composition with
         weights in intermediate coupling. Only SLJ states with the given minimum weight are included. """

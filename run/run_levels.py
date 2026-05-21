@@ -61,8 +61,21 @@ if __name__ == "__main__":
         logger.info(f"    {line}")
 
     A = ion.radiative_rates()
-    A = np.column_stack((A.ed[-2::-1, -1], A.md[-2::-1, -1]))
+    i = -1
+    A = np.column_stack((A.ed[i - 1::-1, i], A.md[i - 1::-1, i]))
     logger.info("Radiative emission rates (ed, md) to ground state in 1/s:")
     for line in A:
         line = "  ".join([f"{v:7.0f}" for v in line])
         logger.info(f"    {line}")
+
+    t = ion.life_times()[1:]
+    logger.info("Radiative life times in ms:")
+    line = "  ".join([f"{v:.2f}" for v in t * 1000])
+    logger.info(f"    {line}")
+
+    beta = ion.branching_ratios()
+    i = -1
+    beta = beta[i - 1::-1, i]
+    logger.info("Branching ratios:")
+    line = "  ".join([f"{v:.3f}" for v in beta])
+    logger.info(f"    {line}")
