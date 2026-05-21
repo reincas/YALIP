@@ -166,9 +166,21 @@ class Levels:
     def mult(self):
         return self.states.mult
 
-    @property
-    def num_states(self):
-        return len(self.states)
+    def __len__(self):
+        """ Returns the number of states. """
+
+        return len(self.states.states)
+
+    def __iter__(self):
+        """ Generate each state. """
+
+        for state in self.states.states:
+            yield state
+
+    def __getitem__(self, item):
+        """ Return the state object with the given index. """
+
+        return self.states.states[item]
 
     def matrix(self, name):
         """ Return the matrix of the tensor operator or the weighted sum of tensor operators. """
