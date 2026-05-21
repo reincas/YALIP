@@ -291,7 +291,7 @@ strength of a transition $i\to j$ in absorption or emission:
 
 $$
 f_{ij} = \frac{4\pi\varepsilon_0}{e^2} \frac{4 \pi m_e c k_{ij}}{\hbar}
-[\chi^\prime_{ed}S_{ed} + \chi^\prime_{md}S_{md}]
+(\chi^\prime_{ed}S_{ed} + \chi^\prime_{md}S_{md})
 $$
 
 with the energy level difference $k_{ij}=|k_i-k_j|$ (in wavenumbers) and the local field correction factors
@@ -315,7 +315,7 @@ in s<sup>-1</sup>:
 
 $$
 A_{ij} = \frac{32 \pi^3 k_{ij}^3}{\hbar}
-[\chi_{ed}S_{ed} + \chi_{md}S_{md}]
+(\chi_{ed}S_{ed} + \chi_{md}S_{md})
 $$
 
 with the local field correction factors
@@ -335,9 +335,9 @@ print(A.ed[i-1::-1, i])
 print(A.md[i-1::-1, i])
 ```
 
-The radiative lifetime $\tau_i=1/\sum_jA_{ij}$ is returned from the method
+The radiative lifetime $\tau_i=1/\sum_jA_{ij}$ is returned by the method
 `Levels.life_times()` in seconds and matrix of branching ratios
-$\beta_{ij}=\tau_i A_{ij}$ from the method `Levels.branchig_ratios()`.
+$\beta_{ij}=\tau_i A_{ij}$ by the method `Levels.branchig_ratios()`.
 
 ## Class `Fit`
 
