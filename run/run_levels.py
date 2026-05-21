@@ -7,7 +7,7 @@
 import logging
 import numpy as np
 
-from yall import MATERIAL, Levels
+from yall import MATERIAL, Coupling, Levels
 
 logger = logging.getLogger("run_levels")
 
@@ -39,8 +39,9 @@ if __name__ == "__main__":
 
     num = 2
     config = f"f{num}"
+    coupling = Coupling.SLJ
 
-    ion = Levels(config, radial, jo, material)
+    ion = Levels(config, coupling, radial, jo, material)
     logger.info("List of states in intermediate coupling:")
     for state in ion.str_levels(min_weight=0.05):
         logger.info(f"    {state}")

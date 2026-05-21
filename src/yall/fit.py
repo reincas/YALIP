@@ -8,6 +8,7 @@ import logging
 import numpy as np
 from scipy.optimize import least_squares
 
+from . import Coupling
 from .spectrum import jo_factors
 from .levels import Levels
 
@@ -295,16 +296,20 @@ def str_compare(lines, states, f_calc=None):
 
 
 class Fit:
-    def __init__(self, config, radial, material=None):
+    def __init__(self, config, coupling, radial, material=None):
 
         assert isinstance(config, str)
+        assert isinstance(coupling, Coupling)
         assert isinstance(radial, dict)
 
         # Electron configuration
         self.config = config
 
+        # Coupling scheme
+        self.coupling = coupling
+
         # Intermediate coupling object
-        self.ion = Levels(config, radial, None, material)
+        self.ion = Levels(config, coupling, radial, None, material)
 
         # Material object providing spectral refractive indices
         self.material = material
@@ -318,12 +323,6 @@ class Fit:
         # No fit yet
         self.levels = None
         self.has_strengths = False
-
-    @property
-    def coupling(self):
-        """ Coupling scheme. """
-
-        return self.ion.coupling
 
     @property
     def base_states(self):
@@ -381,7 +380,7 @@ class Fit:
             dk = opt.get_sigma()
             logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
 
-            self.ion = Levels(self.config, opt.params, None, self.material)
+            self.ion = Levels(self.config, self.coupling, opt.params, None, self.material)
 
             # Judd-Ofelt fit
             if self.has_strengths:

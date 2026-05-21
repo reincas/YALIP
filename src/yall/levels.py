@@ -17,13 +17,13 @@ logger = logging.getLogger("yall.levels")
 class IntermediateState(State):
     """ Class for an electron state in an intermediate coupling of SLJM or SLJ states. """
 
-    def __init__(self, energy, values, base_states):
+    def __init__(self, energy, values, states):
         """ Store the energy level and the linear combination vector of the state. """
 
         assert isinstance(energy, float)
         assert isinstance(values, np.ndarray)
-        assert isinstance(base_states, list)
-        assert len(base_states) == len(values)
+        assert isinstance(states, list)
+        assert len(states) == len(values)
 
         # Energy level of the state
         self.energy = energy
@@ -40,7 +40,7 @@ class IntermediateState(State):
         assert abs(sum(self.weights) - 1.0) < 1e-7
 
         # List of base states
-        self.states = [base_states[i] for i in indices]
+        self.states = [states[i] for i in indices]
 
         # Initialise attributes of the parent object
         ref = self.states[0]
@@ -56,11 +56,6 @@ class IntermediateState(State):
 
         indices = [i for i in range(len(self.states)) if self.weights[i] >= min_weight]
         return " + ".join([f"{self.weights[i]:.2f} {self.states[i].short()}" for i in indices])
-
-    def __str__(self):
-        """ Return a long string representation of the state. """
-
-        return self.long()
 
 
 class IntermediateList(StateList):
@@ -101,7 +96,6 @@ class IntermediateList(StateList):
         # Initialise attributes of the parent object
         super().__init__(base_states.config, coupling, states, transform)
 
-
     def matrix(self, name):
         """ Return the matrix of the tensor operator or the weighted sum of tensor operators. """
 
@@ -119,14 +113,19 @@ class IntermediateList(StateList):
 class Levels:
     """ Intermediate coupling class providing energy levels and radiative transitions. """
 
-    def __init__(self, config, radial, jo=None, material=None):
+    def __init__(self, config, coupling, radial, jo=None, material=None):
 
         assert isinstance(config, str)
+        assert isinstance(coupling, Coupling)
         assert isinstance(radial, dict)
+        assert coupling in (Coupling.SLJ, Coupling.SLJM)
         assert jo is None or isinstance(jo, dict)
 
         # Electron configuration
         self.config = config
+
+        # Coupling scheme
+        self.coupling = coupling
 
         # Radial integrals
         assert "base" in radial
@@ -138,8 +137,9 @@ class Levels:
         # Material object providing spectral refractive indices
         self.material = material
 
-        # Coupling scheme and its basis states
-        self.coupling = Coupling.SLJM if any(key.startswith("Hcf/") for key in radial) else Coupling.SLJ
+        # Basis states
+        if any(key.startswith("Hcf/") for key in radial):
+            assert self.coupling == Coupling.SLJM
         self.base_states = get_states(self.config, self.coupling)
 
         # Intermediate states
