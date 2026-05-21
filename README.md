@@ -192,8 +192,8 @@ format.
 
 ## Class `Levels`
 
-This class is the interface to lanthanide states in intermediate coupling, their
-energy levels and radiative transitions.
+This class is the interface to lanthanide states in intermediate coupling as
+well as their energy levels and radiative transitions.
 
 ```
 from yall import Cauchy, Coupling, Levels 
@@ -239,16 +239,19 @@ The contribution weight of each base state is the square of its signed value and
 the sum of the respective list attribute `weights` is therefore equal to 1.
 All of these lists are ordered for decreasing weights.
 
-The method `short()` of an `IntermediateState` object returns the short string
-representation of its main basis state and `long(min_weight=0.0)` returns a string
-containing weight factors together with the respective short string representations
-of all basis states with weight factors greater or equal `min_weight`.
+The method `IntermediateState.short()` returns the short string representation of
+the intermediate state's main basis state and
+`IntermediateState.long(min_weight=0.0)` returns a string containing weight
+factors together with the respective short string representations of all basis
+states with weight factors greater or equal `min_weight`.
+Furthermore the convenience method `Levels.str_levels(min_weight=0.0)` generates
+a string with energy and basis state composition for each intermediate state.   
 
-The methods `matrix` and `reduced` of an `Levels` object work exactly as for a 
-`States` object, but they return matrices in intermediate coupling instead.
+The methods `Levels.matrix(name)` and `Levels.reduced(name)` work exactly as for
+a `States` object, but they return matrices in intermediate coupling instead.
 
-If the optional arguments `jo` and `material` are used when a `Levels` object is 
-initialised, it can be used to calculate the strength or radiative transitions.
+If the optional arguments `jo` and `material` are provided when a `Levels` object
+is initialised, it can be used to calculate the strength or radiative transitions.
 The Judd-Ofelt parameters in the dictionary `jo` are expected in pm<sup>2</sup>
 and the object `material` must provide a method `refractive_index(k)` which returns
 the refractive index of the material for the given wavenumber in cm<sup>-1</sup>.
@@ -273,18 +276,18 @@ $$
 with the Bohr magneton $\beta_m = \frac{e\hbar}{2m_e}$.
 The physical unit of these line strength values is Jm<sup>3</sup>.
 The matrices containing all electric and magnetic dipole transition line strengths 
-are returned by the method `Levels.line_strengths()` as data class with two
-attributes `ed` and `md`.
+are returned by the method `Levels.line_strengths()` as data class `Transition` 
+with two attributes `ed` and `md`.
 The following code prints the line strengths of all ground state absorptions:  
 
 ```
-strength = ion.line_strengths()
-print(strength.ed[1:, 0])
-print(strength.md[1:, 0])
+line = ion.line_strengths()
+print(line.ed[1:, 0])
+print(line.md[1:, 0])
 ```
 
-The line strengths are typically used to calculate the dimensionless oscillator strength of a transition $i\to j$
-in absorption or emission:
+The line strengths are typically used to calculate the dimensionless oscillator
+strength of a transition $i\to j$ in absorption or emission:
 
 $$
 f_{ij} = \frac{4\pi\varepsilon_0}{e^2} \frac{4 \pi m_e c k_{ij}}{\hbar}
@@ -297,11 +300,22 @@ $$
 \chi^\prime_{ed} = \frac{(n^2+2)^2}{9n} \qquad \chi^\prime_{md} = n
 $$
 
-Another useful quantity is the spontaneous radiative emission rate (in s<sup>-1</sup>) of a transition:
+The method `Levels.oscillator_strengths()` returns the oscillator strengths of
+all transitions as `Transition` object and the following code prints the oscillator
+strengths of all ground state absorptions with a convenient scaling factor:  
+
+```
+osc = ion.oscillator_strengths()
+print(osc.ed[1:, 0] * 1e8)
+print(osc.md[1:, 0] * 1e8)
+```
+
+Another useful quantity is the spontaneous radiative emission rate of a transition
+in s<sup>-1</sup>:
 
 $$
 A_{ij} = \frac{32 \pi^3 k_{ij}^3}{\hbar}
-\[\chi_{ed}S_{ed} + \chi_{md}S_{md}\]
+[\chi_{ed}S_{ed} + \chi_{md}S_{md}]
 $$
 
 with the local field correction factors
@@ -310,9 +324,15 @@ $$
 \chi_{ed} = \frac{n(n^2+2)^2}{9} \qquad \chi_{md} = n^3
 $$
 
-Please be aware that due to dispersion the refractive index $n(k_{ij})$ in general is a function of the
-wavenumber $k_{ij}$ of the transition.
+The method `Levels.radiative_rates()` returns the radiative rates of all
+transitions as `Transition` object and the following code prints the rates of all
+emissions originating from the highest state:
 
+```
+A = ion.radiative_rates()
+print(A.ed[-2::-1, -1])
+print(A.md[-2::-1, -1])
+```
 
 ## Class Fit
 
