@@ -532,7 +532,7 @@ The table consists of 12 columns:
 12. Level name
 
 Columns 7-11 are only generated if the `Fit` object was initialised with a 
-materials argument.
+`materials` argument.
 The final line contains four elements:
 
 1. Mean error margin of all measured energies in cm<sup>-1</sup>
@@ -540,6 +540,29 @@ The final line contains four elements:
 3. Mean error margin of all measured oscillator strengths in $10^{-8}$
 4. Weighted mean deviation of measured and calculated oscillator strengths
    in $10^{-8}$
+
+The weighted mean deviation of measured and calculated energies `Fit.sigma_k` is 
+
+$$
+\sigma_k = \sqrt{\frac{
+  \sum_i ((k^\mathrm{meas}_i - k^\mathrm{calc}_i) / \Delta k^\mathrm{meas}_i)^2
+  }{\sum_i (1 / \Delta k^\mathrm{meas}_i)^2}}
+$$
+
+and the weighted mean deviation of measured and calculated oscillator strengths
+`Fit.sigma_f` 
+
+$$
+\sigma_f = \sqrt{\frac{
+  \sum_i ((f^\mathrm{meas}_i - f^\mathrm{ed}_i - f^\mathrm{md}_i) / \Delta f^\mathrm{meas}_i)^2
+  }{\sum_i (1 / \Delta f^\mathrm{meas}_i)^2}}
+$$
+
+It is important to carefully monitor these values, because it might indicate
+overfitting problems when they fall below the mean error margins.
+This is the case for the energy level fit in the example above, which optimises
+a matching of 9 measured lines to the calculation using 8 free parameters.
+
 
 ## Parameter Sets
 
