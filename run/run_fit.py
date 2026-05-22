@@ -20,7 +20,7 @@ MEAS = [
     [7,      '1D_2',            17026, 20, 199.2e-8, 10.7e-8],
     [8,      '3P_0',            20859, 12, 180.0e-8, 17.4e-8],
     [(9, 10), ('3P_1', '1I_6'), 21505, 20, 542.6e-8, 30.5e-8],
-    [11,      '3P_2',           22645, 10, 926.8e-8, 28.7e-8]
+    [11,      '3P_2',           22645, 10, 926.8e-8, 28.7e-8],
 ]
 
 STAGES = [
@@ -62,6 +62,6 @@ if __name__ == '__main__':
     coupling = Coupling.SLJ
 
     opt = Fit(config, coupling, radial, material)
-    opt.level_fit(lines, stages)
+    opt.run(lines, stages)
     for line in opt.str_compare():
         logger.info(line)

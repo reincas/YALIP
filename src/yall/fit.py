@@ -342,7 +342,7 @@ class Fit:
 
         return self.ion.judd_ofelt
 
-    def level_fit(self, lines, stages):
+    def run(self, lines, stages=None):
         """ Multi-stage energy level fit to measured absorption lines."""
 
         # Measured absorption lines
@@ -382,13 +382,16 @@ class Fit:
 
             self.ion = Levels(self.config, self.coupling, opt.params, None, self.material)
 
-            # Judd-Ofelt fit
-            if self.has_strengths:
-                f_lines = [[line[0], line[4], line[5]] for line in lines]
-                judd_ofelt, df = judd_ofelt_fit(self.ion, f_lines)
-                self.ion.judd_ofelt = judd_ofelt
-                p = format_fixed(judd_ofelt, 3)
-                logger.info(f"Stage {i}: Final df: {df:.2f}, parameters: {p}")
+        # Judd-Ofelt fit
+        if self.has_strengths:
+            f_lines = [[line[0], line[4], line[5]] for line in lines]
+            judd_ofelt, df = judd_ofelt_fit(self.ion, f_lines)
+            self.ion.judd_ofelt = judd_ofelt
+            p = format_fixed(judd_ofelt, 3)
+            logger.info(f"Judd-Ofelt fit: df: {df:.2f}, parameters: {p}")
+
+        # Return optimised Levels object
+        return self.ion
 
     def str_compare(self):
         assert self.lines is not None, "Run an energy level fit first!"
