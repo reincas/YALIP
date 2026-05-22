@@ -452,7 +452,7 @@ Nevertheless it is advisable to perform the optimisation in several stages,
 beginning with the most important first-order parameter groups `H1` (Coulomb)
 and `H2` (spin-orbit) only.
 In the next stage the second order Coulomb interactions `H3`and `H4`should be
-added and in the final step you might check is the magnetic interactions `H5`
+added and in the final step you might check if the magnetic interactions `H5`
 and `H6` can improve the result further.
 
 For the Pr<sup>3+</sup> ion this approach would look like:
