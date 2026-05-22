@@ -283,7 +283,8 @@ There is no universally accepted definition of the line strength of a transition
 For electric dipole transitions, the YALL package uses the definition
 
 $$
-S_{ed} = \frac{1}{3(2J_i+1)} \frac{e^2}{4\pi\varepsilon_0} \sum\limits_{\lambda=2,4,6}
+S^\mathrm{ed}_{ij} =
+\frac{1}{3(2J_i+1)} \frac{e^2}{4\pi\varepsilon_0} \sum\limits_{\lambda=2,4,6}
 \Omega_\lambda |\langle J_j\parallel \mathbf{U}^{(\lambda)}\parallel J_i\rangle|^2
 $$
 
@@ -291,7 +292,8 @@ with the Judd-Ofelt parameters $\Omega_2$, $\Omega_4$, and $\Omega_6$.
 For magnetic dipole transitions it uses
 
 $$
-S_{md} = \frac{1}{3(2J_i+1)} \frac{1}{4\pi\varepsilon_0} \frac{\beta_m^2}{c^2 \hbar^2}
+S^\mathrm{md}_{ij} =
+\frac{1}{3(2J_i+1)} \frac{1}{4\pi\varepsilon_0} \frac{\beta_m^2}{c^2 \hbar^2}
 |\langle J_j\parallel \mathbf{L}+g_s\mathbf{S}\parallel J_i\rangle|^2
 $$
 
@@ -313,13 +315,13 @@ strength of a transition $i\to j$ in absorption or emission:
 
 $$
 f_{ij} = \frac{4\pi\varepsilon_0}{e^2} \frac{4 \pi m_e c k_{ij}}{\hbar}
-(\chi^\prime_{ed}S_{ed} + \chi^\prime_{md}S_{md})
+(\chi^\prime_\mathrm{ed}S^\mathrm{ed}_{ij} + \chi^\prime_\mathrm{md}S^\mathrm{md}_{ij})
 $$
 
 with the energy level difference $k_{ij}=|k_i-k_j|$ (in wavenumbers) and the local field correction factors
 
 $$
-\chi^\prime_{ed} = \frac{(n^2+2)^2}{9n} \qquad \chi^\prime_{md} = n
+\chi^\prime_\mathrm{ed} = \frac{(n^2+2)^2}{9n} \qquad \chi^\prime_\mathrm{md} = n
 $$
 
 The method `Levels.oscillator_strengths()` returns the oscillator strengths of
@@ -337,13 +339,13 @@ in s<sup>-1</sup>:
 
 $$
 A_{ij} = \frac{32 \pi^3 k_{ij}^3}{\hbar}
-(\chi_{ed}S_{ed} + \chi_{md}S_{md})
+(\chi_\mathrm{ed}S^\mathrm{ed}_{ij} + \chi_\mathrm{md}S^\mathrm{md}_{ij})
 $$
 
 with the local field correction factors
 
 $$
-\chi_{ed} = \frac{n(n^2+2)^2}{9} \qquad \chi_{md} = n^3
+\chi_\mathrm{ed} = \frac{n(n^2+2)^2}{9} \qquad \chi_\mathrm{md} = n^3
 $$
 
 The method `Levels.radiative_rates()` returns the radiative rates of all
