@@ -542,6 +542,7 @@ The final line contains four elements:
    in $10^{-8}$
 
 The weighted mean deviation of measured and calculated energies `Fit.sigma_k` is 
+given by the expression 
 
 $$
 \sigma_k = \sqrt{\frac{
@@ -550,7 +551,7 @@ $$
 $$
 
 and the weighted mean deviation of measured and calculated oscillator strengths
-`Fit.sigma_f` 
+`Fit.sigma_f` is
 
 $$
 \sigma_f = \sqrt{\frac{
