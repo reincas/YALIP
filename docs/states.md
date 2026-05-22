@@ -44,9 +44,9 @@ of a state in $SLJ$ coupling and the value 1 for the other coupling schemes.
 
 ### Matrices
 
-The matrix of each tensor operator can be obtained from the `States` object as
-`numpy.ndarray` object by calling its method `matrix` with the respective operator
-name:
+The matrix of each [tensor operator](operator.md) can be obtained from the
+`States` object as `numpy.ndarray` object by calling its method `matrix` with
+the respective operator name:
 
 ```
 matrix = states.matrix("H1/2")

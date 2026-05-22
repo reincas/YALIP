@@ -24,28 +24,33 @@ The package is available on PyPI and the installation therefore is possible usin
 python -m pip install yall
 ```
 
-## Usage
+## Usage Examples
 
-The YALL package is designed for three use cases on different abstraction levels:
+The YALL package is designed for three use cases on different abstraction levels.
 
-1. Access to raw numerical representations of states and matrices from the AMELI
-repository using the class [`States`](docs/states.md)
-2. Calculation of intermediate states, energy levels and radiative transitions
-based on given radial integrals and Judd-Ofelt parameters using the class `Levels`
-3. Performing energy level and Judd-Ofelt fits to find optimised radial integrals
-and Judd-Ofelt parameters matching a measured absorption spectrum using the class
-`Fit`
+### 1. Class `States`
 
-## Class `Levels`
+Access to raw numerical representations of states and
+[operator matrices](docs/operators.md) from the AMELI repository is provided by
+the [class `States`](docs/states.md).
+The following code initialises all states of the Pr<sup>3+</sup> ion in $SLJ$
+coupling:
 
-This class is the interface to lanthanide states in intermediate coupling as
-well as their energy levels and radiative transitions.
-Generation of a `Levels` object requires to specify the electron configuration,
-the coupling scheme and the set of radial integrals (in cm<sup>-1</sup>).
-Specification of Judd-Ofelt parameters (in pm<sup>2</sup>) and material is
-optional, but provides access to radiative dipole transition properties.
+```
+from yall import States, Coupling
 
-A typical initialisation code for a Pr<sup>3+</sup> ion would look like:
+config = "f2"
+coupling = Coupling.SLJ
+
+states = States(config, coupling)
+```
+
+### 2. Class `Levels`
+
+Calculation of intermediate states, energy levels and radiative transitions
+based on given radial integrals and Judd-Ofelt parameters is provided by the
+[class `Levels`](docs/levels.md).
+A typical initialisation code for a Pr<sup>3+</sup> ion looks like:
 
 ```
 from yall import Cauchy, Coupling, Levels
@@ -60,157 +65,12 @@ material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 ion = Levels(config, coupling, radial, jo, material)
 ```
 
-When the `Levels` object is initialised, it builds its total perturbation
-Hamiltonian based on the given radial integrals and diagonalises it to obtain
-the energy and linear combination of basis states for each state in intermediate
-coupling.
-The special key `"base"` fixes the energy of the ground state, all other energy
-levels are shifted accordingly.
+### 3. Class `Fit`
 
-The unit of radial parameters is that of an energy, but YALL follows the standard
-convention in the literature to use wavenumbers in cm<sup>-1</sup> instead.
-A wavenumber is the inverse of the wavelength in vacuum
-
-$$
-k = \frac{1}{\lambda}
-$$
-
-which is proportional to the photon energy:
-
-$$
-E = h c k
-$$
-
-### Intermediate States
-
-A `Levels` object acts as ordered list of intermediate states.
-Therefore, `ion[i]` returns an `IntermediateState` object with `ion[0]` being the
-ground state.
-Instead of quantum numbers, an `IntermediateState` object holds a list of basis
-states in its attribute `states` and the corresponding linear combination factors
-in its attribute `values`.
-In $SLJ$ coupling the list of basis states contains only states with the same
-quantum number $J$ in contrast to all states in $SLJM$ coupling. 
-The contribution weight of each base state is the square of its signed value and
-the sum of the respective list attribute `weights` is therefore equal to 1.
-All of these lists are ordered for decreasing weights.
-
-The method `IntermediateState.short()` returns the short string representation of
-the intermediate state's main basis state and
-`IntermediateState.long(min_weight=0.0)` returns a string containing weight
-factors together with the respective short string representations of all basis
-states with weight factors greater or equal `min_weight`.
-Furthermore the convenience method `Levels.str_levels(min_weight=0.0)` generates
-a string with energy and basis state composition for each intermediate state.   
-
-### Matrices
-
-The methods `Levels.matrix(name)` and `Levels.reduced(name)` work exactly as they
-do for a `States` object, but they return matrices in intermediate coupling
-instead.
-
-### Radiative Transitions
-
-If the optional arguments `jo` and `material` are provided when a `Levels` object
-is initialised, it can be used to calculate the strength or radiative transitions.
-The Judd-Ofelt parameters in the dictionary `jo` are expected in pm<sup>2</sup>
-and the object `material` must provide a method `refractive_index(k)` which returns
-the refractive index of the material for the given wavenumber in cm<sup>-1</sup>.
-The YALL package provides the classes `Cauchy` and `Sellmeier` for this purpose.
-
-There is no universally accepted definition of the line strength of a transition.
-For electric dipole transitions, the YALL package uses the definition
-
-$$
-S^\mathrm{ed}_{ij} =
-\frac{1}{3(2J_i+1)} \frac{e^2}{4\pi\varepsilon_0} \sum\limits_{\lambda=2,4,6}
-\Omega_\lambda |\langle J_j\parallel \mathbf{U}^{(\lambda)}\parallel J_i\rangle|^2
-$$
-
-with the Judd-Ofelt parameters $\Omega_2$, $\Omega_4$, and $\Omega_6$.
-For magnetic dipole transitions it uses
-
-$$
-S^\mathrm{md}_{ij} =
-\frac{1}{3(2J_i+1)} \frac{1}{4\pi\varepsilon_0} \frac{\beta_m^2}{c^2 \hbar^2}
-|\langle J_j\parallel \mathbf{L}+g_s\mathbf{S}\parallel J_i\rangle|^2
-$$
-
-with the Bohr magneton $\beta_m = \frac{e\hbar}{2m_e}$.
-The physical unit of these line strength values is Jm<sup>3</sup>.
-The matrices containing all electric and magnetic dipole transition line strengths 
-are returned by the method `Levels.line_strengths()` as data class `Transition` 
-with two attributes `ed` and `md`.
-The following code prints the line strengths of all ground state absorptions:  
-
-```
-line = ion.line_strengths()
-print(line.ed[1:, 0])
-print(line.md[1:, 0])
-```
-
-The line strengths are typically used to calculate the dimensionless oscillator
-strength of a transition $i\to j$ in absorption or emission:
-
-$$
-f_{ij} = \frac{4\pi\varepsilon_0}{e^2} \frac{4 \pi m_e c k_{ij}}{\hbar}
-(\chi^\prime_\mathrm{ed}S^\mathrm{ed}_{ij} + \chi^\prime_\mathrm{md}S^\mathrm{md}_{ij})
-$$
-
-with the energy level difference $k_{ij}=|k_i-k_j|$ (in wavenumbers) and the local field correction factors
-
-$$
-\chi^\prime_\mathrm{ed} = \frac{(n^2+2)^2}{9n} \qquad \chi^\prime_\mathrm{md} = n
-$$
-
-The method `Levels.oscillator_strengths()` returns the oscillator strengths of
-all transitions as `Transition` object and the following code prints the oscillator
-strengths of all ground state absorptions with a convenient scaling factor:  
-
-```
-osc = ion.oscillator_strengths()
-print(osc.ed[1:, 0] * 1e8)
-print(osc.md[1:, 0] * 1e8)
-```
-
-Another useful quantity is the spontaneous radiative emission rate of a transition
-in s<sup>-1</sup>:
-
-$$
-A_{ij} = \frac{32 \pi^3 k_{ij}^3}{\hbar}
-(\chi_\mathrm{ed}S^\mathrm{ed}_{ij} + \chi_\mathrm{md}S^\mathrm{md}_{ij})
-$$
-
-with the local field correction factors
-
-$$
-\chi_\mathrm{ed} = \frac{n(n^2+2)^2}{9} \qquad \chi_\mathrm{md} = n^3
-$$
-
-The method `Levels.radiative_rates()` returns the radiative rates of all
-transitions as `Transition` object and the following code prints the rates of all
-emissions originating from the highest state:
-
-```
-A = ion.radiative_rates()
-i = len(ion) - 1
-print(A.ed[i-1::-1, i])
-print(A.md[i-1::-1, i])
-```
-
-The radiative lifetime $\tau_i=1/\sum_jA_{ij}$ is returned by the method
-`Levels.life_times()` in seconds and matrix of branching ratios
-$\beta_{ij}=\tau_i A_{ij}$ by the method `Levels.branchig_ratios()`.
-
-## Class `Fit`
-
-This class determines radial integrals and Judd-Ofelt parameters matching a
+The [class `Fit`](docs/fit.md) is used to perform energy level and Judd-Ofelt
+fits to find optimised radial integrals and Judd-Ofelt parameters matching a
 measured absorption spectrum.
-Generation of a `Fit` object requires to specify the electron configuration,
-the coupling scheme and an initial set of radial integrals (in cm<sup>-1</sup>).
-Specification of the material is optional and activates the Judd_Ofelt fit.
-
-A typical initialisation code for a Pr<sup>3+</sup> fit would look like:
+A typical initialisation code for a Pr<sup>3+</sup> looks like:
 
 ```
 from yall import Cauchy, Coupling, Fit
@@ -224,204 +84,55 @@ material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 opt = Fit(config, coupling, radial, material)
 ```
 
-### Absorption Measurement
-
-The fitting algorithm expects line data derived from a measured absorption
-spectrum in a certain list format.
-The following code gives an example measurement representation for a
-Pr<sup>3+</sup> ion:
-
-```
-meas = [
-    [1,      '3H_5',             2365,  4, 196.2e-8,  2.8e-8],
-    [2,      '3H_6',             4485, 18,  77.4e-8,  5.1e-8],
-    [3,      '3F_2',             5105,  5, 283.3e-8,  6.2e-8],
-    [4,      '3F_3',             6467,  7, 637.0e-8, 16.2e-8],
-    [5,      '3F_4',             6958, 10, 244.2e-8, 13.1e-8],
-    [6,      '1G_4',             9883,  7,  26.4e-8,  0.5e-8],
-    [7,      '1D_2',            17026, 20, 199.2e-8, 10.7e-8],
-    [8,      '3P_0',            20859, 12, 180.0e-8, 17.4e-8],
-    [(9, 10), ('3P_1', '1I_6'), 21505, 20, 542.6e-8, 30.5e-8],
-    [11,      '3P_2',           22645, 10, 926.8e-8, 28.7e-8],
-]
-```
-
-Each element of this list represents an absorption line and is itself a list of
-six elements:
-
-1. Energy level index or tuple of overlapping level indices
-2. Short name or tuple of short names of the respective levels
-3. Measured barycenter energy of the line in cm<sup>-1</sup>
-4. Error margin of the line energy in cm<sup>-1</sup>
-5. Measured dimensionless oscillator strength of the line
-6. Error margin of the oscillator strength
-
-The level indices connect the measurement results to specific calculated energy
-levels.
-Level names currently are for information only.
-They are not used by the algorithm yet, but may be verified to disentangle crossing
-levels in the future.
-For a level index `i` the level name should match `str(ion[i])`.
-
-Note that realistic error margins are quite important, because the algorithm uses
-them as weight factors for the energy level fit as well as the Judd-Ofelt fit.
-However, you may bypass this feature by setting all error margins to 1.
-
-### Optimisation
-
-The optimisation algorithm is started by calling the method
-`Fit.run(lines, stages=None)` with the measured spectral data and optional
-instructions for multiple stages of the energy level fit.
-Without the second parameter only a Judd-Ofelt fit is performed keeping the
-initial radial integrals.
-The method returns the attribute `Fit.ion`, which is a `Levels` object with the
-optimised parameters.
-
-In contrast to the linear Judd-Ofelt fit, the energy level fit is a nonlinear
-fit which not only requires initial guesses, but also individual fitting
-strategies.
-Nonlinear fitting can always result in a run-off to unrealistic values or the 
-algorithm may get stuck in a local minimum far from the global optimum.
-Fortunately the parameter landscape of lanthanide energy levels is smooth and
-fitting-friendly.
-Therefore, the fast Levenberg-Marquardt algorithm used by YALL
-(`scipy.optimize.least_squares` with `method='lm'`) usually delivers reasonable
-results.
-Nevertheless it is advisable to perform the optimisation in several stages,
-beginning with the most important first-order parameter groups `H1` (Coulomb)
-and `H2` (spin-orbit) only.
-In the next stage the second order Coulomb interactions `H3`and `H4`should be
-added and in the final step you might check if the magnetic interactions `H5`
-and `H6` can improve the result further.
-
-For the Pr<sup>3+</sup> ion this approach would look like:
-
-```
-stages = [
-    ["base", "H1/2", "H1/4", "H1/6", "H2"],
-    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2"],
-    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2", "H5fix", "H6fix"],
-]
-ion = opt.run(lines, stages)
-```
-
-The colon in `":H3/2"` tells the optimiser to use this parameter for the energy
-level calculation, but not optimize it.
-`"H5fix"` and `"H6fix"` are often used abbreviations for the fixed relationships
-`{"H5/0": 1.0, "H5/2": 0.56, "H5/4": 0.38}` and 
-`{"H6/2": 1.0, "H6/4": 0.75, "H6/6": 0.50}`, respectively.
-If the `Fit` object was initialised with a materials object, the last stage of
-the energy-level fit will be followed by a Judd-Ofelt fit.
-
-In order to monitor the fitting progress in more detail, you can also call the
-method run for each individual fitting stage separately: 
-
-```
-for stage in stages:
-    opt.run(lines, stage)
-```
-
-### Visualisation
-
-For a quick visualisation of the fitting results, the method `Fit.str_compare()`
-generates a text table line-by-line:
-
-```
-for line in opt.str_compare():
-    print(line)
-```
-
-and the result looks like this:
-
-```
-         | kmeas        kcalc       | fmeas            fed   fmd         |     
--------------------------------------------------------------------------------
- 0       |                330       |                  0.0   0.0         | 3H_4
- 1  3H_5 |  2365   (4)   2364  -0.9 | 196.2   (2.8)  173.9  14.2    -8.2 | 3H_5
- 2  3H_6 |  4485  (18)   4496  11.1 |  77.4   (5.1)   75.5   0.0    -1.9 | 3H_6
- 3  3F_2 |  5105   (5)   5107   2.4 | 283.3   (6.2)  284.9   0.0     1.6 | 3F_2
- 4  3F_3 |  6467   (7)   6463  -4.4 | 637.0  (16.2)  655.0   0.0    18.0 | 3F_3
- 5  3F_4 |  6958  (10)   6955  -3.3 | 244.2  (13.1)  393.8   0.7   150.3 | 3F_4
- 6  1G_4 |  9883   (7)   9883   0.3 |  26.4   (0.5)   27.0   0.4     1.0 | 1G_4
- 7  1D_2 | 17026  (20)  17023  -3.0 | 199.2  (10.7)  117.6   0.0   -81.6 | 1D_2
- 8  3P_0 | 20859  (12)  20857  -2.3 | 180.0  (17.4)  267.9   0.0    87.9 | 3P_0
- 9  3P_1 | 21505  (20)  21472  -4.8 | 542.6  (30.5)  273.5   0.0  -127.7 | 3P_1
-10  1I_6 |   ...        21507   ... |   ...          141.5   0.0     ... | 1I_6
-11  3P_2 | 22645  (10)  22646   1.2 | 926.8  (28.7)  408.5   0.0  -518.3 | 3P_2
-12       |              46454       |                 24.0   0.0         | 1S_0
--------------------------------------------------------------------------------
-         |        11.3          2.7 |          13.1                 11.7 |     
-```
-
-The table consists of 12 columns:
-
-1. Level index
-2. Level name taken from the list of lines
-3. Measured barycenter energy in cm<sup>-1</sup>. Overlapping levels
-   are marked by ellipses (`...`).
-4. Error margin of the measured energy in cm<sup>-1</sup>
-5. Calculated level energy
-6. Difference between measured and calculated energy
-7. Measured oscillator strength in $10^{-8}$. Overlapping levels
-   are marked by ellipses (`...`).
-8. Error margin of the measured oscillator strength in $10^{-8}$
-9. Calculated electrical dipole oscillator strength in $10^{-8}$
-10. Calculated magnetic dipole oscillator strength in $10^{-8}$
-11. Difference between measured and calculated oscillator strength
-12. Level name
-
-Columns 7-11 are only generated if the `Fit` object was initialised with a 
-`materials` argument.
-The final line contains four elements:
-
-1. Mean error margin of all measured energies in cm<sup>-1</sup>
-2. Weighted mean deviation of measured and calculated energies in cm<sup>-1</sup>
-3. Mean error margin of all measured oscillator strengths in $10^{-8}$
-4. Weighted mean deviation of measured and calculated oscillator strengths
-   in $10^{-8}$
-
-The weighted mean deviation of measured and calculated energies `Fit.sigma_k` is 
-given by the expression 
-
-$$
-\sigma_k = \sqrt{\frac{
-  \sum_i ((k^\mathrm{meas}_i - k^\mathrm{calc}_i) / \Delta k^\mathrm{meas}_i)^2
-  }{\sum_i (1 / \Delta k^\mathrm{meas}_i)^2}}
-$$
-
-and the weighted mean deviation of measured and calculated oscillator strengths
-`Fit.sigma_f` is
-
-$$
-\sigma_f = \sqrt{\frac{
-  \sum_i ((f^\mathrm{meas}_i - f^\mathrm{ed}_i - f^\mathrm{md}_i) / \Delta f^\mathrm{meas}_i)^2
-  }{\sum_i (1 / \Delta f^\mathrm{meas}_i)^2}}
-$$
-
-It is important to carefully monitor these values, because it might indicate
-overfitting problems when they fall below the mean error margins.
-This is the case for the energy level fit in the example above, which optimises
-a matching of 9 measured lines to the calculation using 8 free parameters.
-
-
-## Parameter Sets
-
 ## Logging
+
+The YALL package uses the logger package for status messages.
+The following code example shows a basic setup to make these messages visible
+on the console:
+
+```
+import logging
+from yall import Coupling, States
+
+logger = logging.getLogger("my_script")
+
+def init_logger(level=logging.INFO):
+    root = logging.getLogger()
+    root.setLevel(level)
+    log_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    console_h = logging.StreamHandler()
+    console_h.setFormatter(log_format)
+    console_h.setLevel(level)
+    root.addHandler(console_h)
+
+if __name__ == "__main__":
+    init_logger(level=logging.DEBUG)
+
+    config = "f2"
+    coupling = Coupling.SLJ
+    
+    states = States(config, coupling)
+```
 
 ## Caching
 
-## Internal structures
+The YALL package uses `platformdirs.user_cache_dir()` to create a cache folder
+for files from the AMELI repository and another one for converted floating point
+matrices.
+YALL regularly checks the repository for new versions, but at most twice a day.
 
-If you want to dig deeper into the package and use internal classes and functions, you might find some additional
-[documentation](docs/internals.md) in the folder `docs` useful.
+The decorator `functools.lru_cache` is used to keep numerical matrices in the
+memory. 
 
 ## License
 
 This is free software under the MIT License.
 
-## Reference
+## References
 
-* <span id="ref1">[1]</span> Reinhard Caspary: "Applied Rare-Earth Spectroscopy for Fiber Laser Optimization", doctoral dissertation at
+<span id="ref1">[1]</span> Reinhard Caspary: "Applied Rare-Earth Spectroscopy for Fiber Laser Optimization", doctoral dissertation at
 Technische Universität Braunschweig, published with Shaker, Aachen, 2002
-* <span id="ref2">[2]</span> Reinhard Caspary: "AMELI: Angular Matrix Elements of Lanthanide Ions", arXiv, 2026,
+
+<span id="ref2">[2]</span> Reinhard Caspary: "AMELI: Angular Matrix Elements of Lanthanide Ions", arXiv, 2026,
 https://doi.org/10.48550/arXiv.2603.21947
