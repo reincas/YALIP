@@ -136,6 +136,8 @@ states = States(config, coupling)
 materials, `Coupling.SLJM` would be suitable for crystalline hosts, and
 `Coupling.Product` gives access to the determinantal product states.
 
+### Basis States
+
 A `States` object acts as a list of states and `states[i]` returns an
 individual`State` object.
 The total number of states is obtained from `len(states)` and the following
@@ -157,6 +159,8 @@ Direct access to the individual quantum numbers of a state is provided by
 the dictionary `state.quantum`.
 The ìnteger attribute `state.mult` holds the multiplicity $2J+1$
 of a state in $SLJ$ coupling and the value 1 for the other coupling schemes. 
+
+### Matrices
 
 The matrix of each tensor operator can be obtained from the `States` object as
 `numpy.ndarray` object using its method `matrix`:
