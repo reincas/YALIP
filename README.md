@@ -385,7 +385,7 @@ material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 opt = Fit(config, coupling, radial, material)
 ```
 
-### Absorption Lines
+### Absorption Measurement
 
 The fitting algorithm expects line data derived from a measured absorption
 spectrum in a certain list format.
