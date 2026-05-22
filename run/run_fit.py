@@ -55,7 +55,6 @@ if __name__ == '__main__':
     lines = MEAS
     stages = STAGES
 
-    jo = None
     material = MATERIAL["Pb:ZBLAN"]
 
     num = LANTHANIDES.index(name[:2])
