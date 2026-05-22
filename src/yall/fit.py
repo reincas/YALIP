@@ -308,6 +308,9 @@ class Fit:
         # Coupling scheme
         self.coupling = coupling
 
+        # Radial integrals
+        self.radial = radial
+
         # Intermediate coupling object
         self.ion = Levels(config, coupling, radial, None, material)
 
@@ -354,9 +357,6 @@ class Fit:
         self.lines = lines
         self.has_strengths = True if size == 6 else False
 
-        # Copy values of radial integrals
-        radial = self.radial_integrals.copy()
-
         # Handle single optimisation stage
         if not isinstance(stages[0], (list, tuple)):
             stages = [stages]
@@ -366,7 +366,7 @@ class Fit:
         for i, names in enumerate(stages):
             raw_names = [n[1:] if n.startswith(":") else n for n in names]
             assert len(set(raw_names)) == len(raw_names)
-            opt.set_params({n: radial[n] for n in raw_names})
+            opt.set_params({n: self.radial[n] for n in raw_names})
 
             p = format_params(opt.params, 6)
             dk = opt.get_sigma()
@@ -374,7 +374,7 @@ class Fit:
 
             names = [n for n in names if n != "base" and not n.startswith(":")]
             opt.fit(names)
-            radial |= opt.params
+            self.radial |= opt.params
 
             p = format_params(opt.params, 6)
             dk = opt.get_sigma()
