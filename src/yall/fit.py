@@ -359,30 +359,34 @@ class Fit:
         self.lines = lines
         self.has_strengths = True if size == 6 else False
 
-        # Handle single optimisation stage
-        if not isinstance(stages[0], (list, tuple)):
-            stages = [stages]
+        if stages is None:
+            self.ion = Levels(self.config, self.coupling, self.radial, None, self.material)
 
-        k_lines = [[line[0], line[2], line[3]] for line in lines]
-        opt = LevelFit(self.matrices, self.mult, k_lines)
-        for i, names in enumerate(stages):
-            raw_names = [n[1:] if n.startswith(":") else n for n in names]
-            assert len(set(raw_names)) == len(raw_names)
-            opt.set_params({n: self.radial[n] for n in raw_names})
+        else:
+            # Handle single optimisation stage
+            if not isinstance(stages[0], (list, tuple)):
+                stages = [stages]
 
-            p = format_params(opt.params, 6)
-            dk = opt.get_sigma()
-            logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
+            k_lines = [[line[0], line[2], line[3]] for line in lines]
+            opt = LevelFit(self.matrices, self.mult, k_lines)
+            for i, names in enumerate(stages):
+                raw_names = [n[1:] if n.startswith(":") else n for n in names]
+                assert len(set(raw_names)) == len(raw_names)
+                opt.set_params({n: self.radial[n] for n in raw_names})
 
-            names = [n for n in names if n != "base" and not n.startswith(":")]
-            opt.fit(names)
-            self.radial |= opt.params
+                p = format_params(opt.params, 6)
+                dk = opt.get_sigma()
+                logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
 
-            p = format_params(opt.params, 6)
-            self.sigma_k = opt.get_sigma()
-            logger.info(f"Stage {i}: Final dk: {self.sigma_k:.2f}, parameters: {p}")
+                names = [n for n in names if n != "base" and not n.startswith(":")]
+                opt.fit(names)
+                self.radial |= opt.params
 
-            self.ion = Levels(self.config, self.coupling, opt.params, None, self.material)
+                p = format_params(opt.params, 6)
+                self.sigma_k = opt.get_sigma()
+                logger.info(f"Stage {i}: Final dk: {self.sigma_k:.2f}, parameters: {p}")
+
+                self.ion = Levels(self.config, self.coupling, opt.params, None, self.material)
 
         # Judd-Ofelt fit
         if self.has_strengths:
