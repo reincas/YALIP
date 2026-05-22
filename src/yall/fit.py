@@ -326,6 +326,8 @@ class Fit:
         # No fit yet
         self.levels = None
         self.has_strengths = False
+        self.sigma_k = None
+        self.sigma_f = None
 
     @property
     def base_states(self):
@@ -377,18 +379,18 @@ class Fit:
             self.radial |= opt.params
 
             p = format_params(opt.params, 6)
-            dk = opt.get_sigma()
-            logger.info(f"Stage {i}: Final dk: {dk:.2f}, parameters: {p}")
+            self.sigma_k = opt.get_sigma()
+            logger.info(f"Stage {i}: Final dk: {self.sigma_k:.2f}, parameters: {p}")
 
             self.ion = Levels(self.config, self.coupling, opt.params, None, self.material)
 
         # Judd-Ofelt fit
         if self.has_strengths:
             f_lines = [[line[0], line[4], line[5]] for line in lines]
-            judd_ofelt, df = judd_ofelt_fit(self.ion, f_lines)
+            judd_ofelt, self.sigma_f = judd_ofelt_fit(self.ion, f_lines)
             self.ion.judd_ofelt = judd_ofelt
             p = format_fixed(judd_ofelt, 3)
-            logger.info(f"Judd-Ofelt fit: df: {df:.2f}, parameters: {p}")
+            logger.info(f"Judd-Ofelt fit: df: {self.sigma_f:.2f}, parameters: {p}")
 
         # Return optimised Levels object
         return self.ion
