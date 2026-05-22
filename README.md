@@ -474,8 +474,8 @@ level calculation, but not optimize it.
 If the `Fit` object was initialised with a materials object, the last stage of
 the energy-level fit will be followed by a Judd-Ofelt fit.
 
-In order to monitor the fitting progress in mor detail, you can also call the
-method run with each individual fitting strategy separately: 
+In order to monitor the fitting progress in more detail, you can also call the
+method run for each individual fitting stage separately: 
 
 ```
 for stage in stages:
