@@ -194,7 +194,7 @@ $$
   }{\sum_i (1 / \Delta f^\mathrm{meas}_i)^2}}
 $$
 
-It is important to carefully monitor these values, because it might indicate
+It is important to carefully monitor these values, because they can indicate
 overfitting problems when they fall below the mean error margins.
 This is the case for the energy level fit in the example above, which optimises
 a matching of 9 measured lines to the calculation using 8 free parameters.
