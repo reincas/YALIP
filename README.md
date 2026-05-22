@@ -194,6 +194,12 @@ format.
 
 This class is the interface to lanthanide states in intermediate coupling as
 well as their energy levels and radiative transitions.
+Generation of a `Levels` object requires to specify the electron configuration,
+the coupling scheme and the set of radial integrals (in cm<sup>-1</sup>).
+Specification of Judd-Ofelt parameters (in pm<sup>2</sup>) and the material
+is optional, but provides access to radiative dipole transition properties.
+
+A typical initialisation code would look like:
 
 ```
 from yall import Cauchy, Coupling, Levels 
@@ -340,6 +346,19 @@ The radiative lifetime $\tau_i=1/\sum_jA_{ij}$ is returned by the method
 $\beta_{ij}=\tau_i A_{ij}$ by the method `Levels.branchig_ratios()`.
 
 ## Class `Fit`
+
+This class determines radial integrals and Judd-Ofelt parameters matching a
+measured absorption spectrum.
+
+```
+from yall import Cauchy, Coupling, Fit 
+config = "f2"
+coupling = Coupling.SLJ
+radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, "H2": 728.18,
+          "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
+material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
+opt = Fit(config, coupling, radial, material)
+```
 
 ## Parameter Sets
 
