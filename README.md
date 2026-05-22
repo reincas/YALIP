@@ -20,7 +20,38 @@ arithmetic according to [[2]](#ref2).
 
 Three groups of spherical tensor operators are supported by the AMELI
 repository: Unit and Coulomb tensor operators, angular momentum operators, and
-perturbation Hamilton operators.
+perturbation Hamilton operators
+
+| ----------------- |-----------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------| ------ | -------------------------------- |
+| Filename          | Description                                                                                         | Tensor Operator                                   | Radial Integral | Rank   | Parameters                       |
+|-------------------|-----------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------|--------|----------------------------------|
+| `U/{k},{q}`       | Component $q$ of the total unit tensor operator of rank $k$ in the orbital angular momentum space   | $\mathrm{{U}}^{{(k)}}_q$                          |                 | $k$    | $k=0\ldots 2l+1, q=-k\ldots k$   |
+| `T/{k},{q}`       | Component $q$ of the total unit tensor operator of rank $k$ in the spin space                       | $\mathrm{{T}}^{{(k)}}_q$                          |                 | $k$    | $k=0, 1,\ q=-k\ldots k$          |
+| `UU/{k}`          | Squared total unit tensor operator of rank $k$ in the orbital angular momentum space                | $(\mathrm{{U}}^{{(k)}}\cdot\mathrm{{U}}^{{(k)}})$ |                 | 0      | $k=0\ldots 2l+1$                 |
+| `TT/{k}`          | Squared total unit tensor operator of rank $k$ in the spin space                                    | $(\mathrm{{T}}^{{(k)}}\cdot\mathrm{{T}}^{{(k)}})$ |                 | 0      | $k=0,1$                          |
+| `UT/{k}`          | Scalar product of the total unit tensor operators of rank $k$ in the orbital and spin spaces        | $(\mathrm{{U}}^{{(k)}}\cdot\mathrm{{T}}^{{(k)}})$ |                 | 0      | $k=0,1$                          |
+| `C/{k},{q}`       | Component $q$ of the Coulomb operator of rank $k$                                                   | $\mathrm{{C}}^{{(k)}}_q$                          |                 | $k$    | $k=0,2,4,6,\ q=-k\ldots k$       |
+| ----------------- |-----------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------| ------ | -------------------------------- |
+| `L/{q}`           | Component $q$ of the total orbital angular momentum operator                                        | $\mathrm{{L}}_q$                                  |                 | 1      | $q=-1,0,1$                       |
+| `S/{q}`           | Component $q$ of the total spin angular momentum operator                                           | $\mathrm{{S}}_q$                                  |                 | 1      | $q=-1,0,1$                       |
+| `J/{q}`           | Component $q$ of the total angular momentum operator                                                | $\mathrm{{J}}_q$                                  |                 | 1      | $q=-1,0,1$                       |
+| `LL`              | Squared total orbital angular momentum operator                                                     | $(\mathrm{{L}}\cdot\mathrm{{L}})$                 | $\alpha$        | 0      |                                  |
+| `SS`              | Squared total spin angular momentum operator                                                        | $(\mathrm{{S}}\cdot\mathrm{{S}})$                 |                 | 0      |                                  |
+| `JJ`              | Squared total angular momentum operator                                                             | $(\mathrm{{J}}\cdot\mathrm{{J}})$                 |                 | 0      |                                  |
+| `LS`              | Scalar product of the total orbital and spin angular momentum operators                             | $(\mathrm{{L}}\cdot\mathrm{{S}})$                 |                 | 0      |                                  |
+| ----------------- |-----------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------| ------ | -------------------------------- |
+| `C2`              | Casimir operator of the special group $G_2$                                                         | $\mathrm{{C}}_2(G_2)$                             | $\beta$         | 0      |                                  |
+| `CR`              | Casimir operator of the special orthogonal (rotational) group in $2l+1$ dimensions                  | $\mathrm{{C}}_2(SO(2l+1))$                        | $\gamma$        | 0      |                                  |
+| `H1/{k}`          | Coulomb first order perturbation Hamiltonian of rank $k$                                            | $\mathrm{{f}}_k$                                  | $F^k$           | 0      | $k=0,2,4,6$                      |
+| `H2`              | Spin-orbit first order perturbation Hamiltonian                                                     | $\mathrm{{z}}$                                    | $\zeta$         | 0      |                                  |
+| `H4/{c}`          | Effective Coulomb second order perturbation Hamiltonian                                             | $\mathrm{{t}}_c$                                  | $T^c$           | 0      | $c=1\ldots 9$                    |
+| `Hss/{k}`         | Spin-spin first order perturbation Hamiltonian of rank $k$                                          | $\mathrm{{m}}_{{k,ss}}$                           |                 | 0      | $k=0,2,4$                        |
+| `Hsoo/{k}`        | Spin-other-orbit first order perturbation Hamiltonian of rank $k$                                   | $\mathrm{{m}}_{{k,soo}}$                          |                 | 0      | $k=0,2,4$                        |
+| `H5/{k}`          | Spin-spin and spin-other-orbit first order perturbation Hamiltonian of rank $k$                     | $\mathrm{{m}}_k$                                  | $M^k$           | 0      | $k=0,2,4$                        |
+| `H6/{k}`          | Effective electrostatic spin-orbit second order perturbation Hamiltonian of rank $k$                | $\mathrm{{p}}_k$                                  | $P^k$           | 0      | $k=2,4,6$                        |
+| `Hcf/{k},{q}`     | Component $q$ of the crystal field perturbation Hamiltonian of rank $k$                             | $\mathrm{{H}}_{{\mathrm{{cf}},q}}^{{(k)}}$        | $B^k_q$         | $k$    | $k=0,2,4,6,\ q=0\ldots k$        |
+| ----------------- |-----------------------------------------------------------------------------------------------------|---------------------------------------------------|-----------------| ------ | -------------------------------- |
+
 The matrix elements of each operator are provided in the product state space,
 for full $SLJM$ coupling, stretched states in $SLJ$ coupling and reduced matrix
 elements in the $SLJ$ space.
