@@ -399,7 +399,8 @@ six elements:
 5. Measured dimensionless oscillator strength of the line
 6. Error margin of the oscillator strength
 
-The level index connects the measurement to specific calculated energy levels.
+The level index connects the measurement results to specific calculated energy
+levels.
 Level names currently are for information only.
 They are not used by the algorithm yet, but may be verified to disentangle crossing
 levels in the future.
