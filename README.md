@@ -180,7 +180,7 @@ elements:
 u2_sq = states.reduced("U/2") ** 2
 ```
 
-Linear combinations of matrices are directly available from both method `matrix`
+Linear combinations of matrices are directly available from both methods `matrix`
 and `reduced` when the operator name is replaced by a dictionary of weight
 factors:
 
@@ -190,10 +190,10 @@ ls_sq = states.reduced({"L": 1.0, "S": CONST_gs}) ** 2
 ```
 
 All matrix elements are returned as double-precision floating-point numbers.
-The YALL package takes particular care to convert the exact integers from the
-AMELI repository, which represent square roots of rationals, into their
-floating-point representation, utilising the full resolution of the floating-point
-format.
+The YALL package takes particular care to convert the exact integer representation
+of signed square roots of rationals from the AMELI repository into their
+floating-point representation with maximum precision, utilising the full resolution
+of the floating-point format.
 
 ## Class `Levels`
 
