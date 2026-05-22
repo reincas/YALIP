@@ -389,23 +389,6 @@ opt = Fit(config, coupling, radial, material)
 
 The fitting algorithm expects line data derived from a measured absorption
 spectrum in a certain list format.
-Each element of this list represents an absorption line and is itself a list of
-six elements:
-
-1. Energy level index or tuple of overlapping level indices
-2. Short name or tuple of short names of the respective levels
-3. Measured barycenter energy of the line in cm<sup>-1</sup>
-4. Error margin of the line energy in cm<sup>-1</sup>
-5. Measured dimensionless oscillator strength of the line
-6. Error margin of the oscillator strength
-
-The level indices connect the measurement results to specific calculated energy
-levels.
-Level names currently are for information only.
-They are not used by the algorithm yet, but may be verified to disentangle crossing
-levels in the future.
-For a level index `i` the level name should match `str(ion[i])`.
-
 The following code gives an example measurement representation for a
 Pr<sup>3+</sup> ion:
 
@@ -423,6 +406,23 @@ meas = [
     [11,      '3P_2',           22645, 10, 926.8e-8, 28.7e-8],
 ]
 ```
+
+Each element of this list represents an absorption line and is itself a list of
+six elements:
+
+1. Energy level index or tuple of overlapping level indices
+2. Short name or tuple of short names of the respective levels
+3. Measured barycenter energy of the line in cm<sup>-1</sup>
+4. Error margin of the line energy in cm<sup>-1</sup>
+5. Measured dimensionless oscillator strength of the line
+6. Error margin of the oscillator strength
+
+The level indices connect the measurement results to specific calculated energy
+levels.
+Level names currently are for information only.
+They are not used by the algorithm yet, but may be verified to disentangle crossing
+levels in the future.
+For a level index `i` the level name should match `str(ion[i])`.
 
 Note that realistic error margins are quite important, because the algorithm uses
 them as weight factors for the energy level fit as well as the Judd-Ofelt fit.
