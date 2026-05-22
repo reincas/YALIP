@@ -428,7 +428,100 @@ Note that realistic error margins are quite important, because the algorithm use
 them as weight factors for the energy level fit as well as the Judd-Ofelt fit.
 However, you may bypass this feature by setting all error margins to 1.
 
+### Optimisation
+
+The optimisation algorithm is started by calling the method
+`Fit.run(lines, stages=None)` with the measured spectral data and optional
+instructions for multiple stages of the energy level fit.
+Without the second parameter only a Judd-Ofelt fit is performed keeping the
+initial radial integrals.
+The method returns the attribute `Fit.ion`, which is a `Levels` object with the
+optimised parameters.
+
+In contrast to the linear Judd-Ofelt fit, the energy level fit is a nonlinear
+fit which not only requires initial guesses, but also individual fitting
+strategies.
+Nonlinear fitting can always result in a run-off to unrealistic values or the 
+algorithm may get stuck in a local minimum far from the global optimum.
+Fortunately the parameter landscape of lanthanide energy levels is smooth and
+fitting-friendly.
+Therefore, the fast Levenberg-Marquardt algorithm used by YALL
+(`scipy.optimize.least_squares` with `method='lm'`) usually delivers reasonable
+results.
+Nevertheless it is advisable to perform the optimisation in several stages,
+beginning with the most important first-order parameter groups `H1` (Coulomb)
+and `H2` (spin-orbit) only.
+In the next stage the second order Coulomb interactions `H3`and `H4`should be
+added and in the final step you might check is the magnetic interactions `H5`
+and `H6` can improve the result further.
+
+For the Pr<sup>3+</sup> ion this approach would look like:
+
+```
+stages = [
+    ["base", "H1/2", "H1/4", "H1/6", "H2"],
+    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2"],
+    ["base", "H1/2", "H1/4", "H1/6", "H2", "H3/0", "H3/1", ":H3/2", "H5fix", "H6fix"],
+]
+ion = opt.run(lines, stages)
+```
+
+The colon in `":H3/2"` tells the optimiser to use this parameter for the energy
+level calculation, but not optimize it.
+`"H5fix"` and `"H6fix"` are often used abbreviations for the fixed relationships
+`{"H5/0": 1.0, "H5/2": 0.56, "H5/4": 0.38}` and 
+`{"H6/2": 1.0, "H6/4": 0.75, "H6/6": 0.50}`, respectively.
+If the `Fit` object was initialised with a materials object, the last stage of
+the energy-level fit will be followed by a Judd-Ofelt fit.
+
+In order to monitor the fitting progress in mor detail, you can also call the
+method run with each individual fitting strategy separately: 
+
+```
+for stage in stages:
+    opt.run(lines, stage)
+```
+
+### Visualisation
+
+For a quick visualisation of the fitting results, the method `Fit.str_compare()`
+generates a text table line-by-line:
+
+```
+for line in opt.str_compare():
+    print(line)
+```
+
+The table consists of 12 columns:
+
+1. Level index
+2. Level name taken from the list of lines
+3. Measured barycenter energy in cm<sup>-1</sup>. Overlapping levels
+   are marked by ellipses (`...`).
+4. Error margin of the measured energy in cm<sup>-1</sup>
+5. Calculated level energy
+6. Difference between measured and calculated energy
+7. Measured oscillator strength in $10^{-8}$. Overlapping levels
+   are marked by ellipses (`...`).
+8. Error margin of the measured oscillator strength in $10^{-8}$
+9. Calculated electrical dipole oscillator strength in $10^{-8}$
+10. Calculated magnetic dipole oscillator strength in $10^{-8}$
+11. Difference between measured and calculated oscillator strength
+12. Level name
+
+Columns 7-11 are only generated if the `Fit` object was initialised with a 
+materials argument.
+The final line contains four elements:
+
+1. Mean error margin of all measured energies in cm<sup>-1</sup>
+2. Weighted mean deviation of measured and calculated energies in cm<sup>-1</sup>
+3. Mean error margin of all measured oscillator strengths in $10^{-8}$
+4. Weighted mean deviation of measured and calculated oscillator strengths
+   in $10^{-8}$
+
 ## Parameter Sets
+
+## Logging
 
 ## Caching
 
