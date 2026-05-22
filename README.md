@@ -270,7 +270,7 @@ The methods `Levels.matrix(name)` and `Levels.reduced(name)` work exactly as the
 do for a `States` object, but they return matrices in intermediate coupling
 instead.
 
-### Radiative transitions
+### Radiative Transitions
 
 If the optional arguments `jo` and `material` are provided when a `Levels` object
 is initialised, it can be used to calculate the strength or radiative transitions.
