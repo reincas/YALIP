@@ -233,6 +233,8 @@ $$
 E = h c k
 $$
 
+### Intermediate States
+
 A `Levels` object acts as ordered list of intermediate states.
 Therefore, `ion[i]` returns an `IntermediateState` object with `ion[0]` being the
 ground state.
@@ -253,9 +255,13 @@ states with weight factors greater or equal `min_weight`.
 Furthermore the convenience method `Levels.str_levels(min_weight=0.0)` generates
 a string with energy and basis state composition for each intermediate state.   
 
+### Matrices
+
 The methods `Levels.matrix(name)` and `Levels.reduced(name)` work exactly as they
 do for a `States` object, but they return matrices in intermediate coupling
 instead.
+
+### Radiative transitions
 
 If the optional arguments `jo` and `material` are provided when a `Levels` object
 is initialised, it can be used to calculate the strength or radiative transitions.
