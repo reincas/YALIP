@@ -29,7 +29,7 @@ perturbation Hamilton operators
 | `UU/{k}`       | Squared total unit tensor operator of rank $k$ in the orbital angular momentum space                | $(\mathrm{{U}}^{{(k)}}\cdot\mathrm{{U}}^{{(k)}})$ |                 | 0      | $k=0\ldots 2l+1$                 |
 | `TT/{k}`       | Squared total unit tensor operator of rank $k$ in the spin space                                    | $(\mathrm{{T}}^{{(k)}}\cdot\mathrm{{T}}^{{(k)}})$ |                 | 0      | $k=0,1$                          |
 | `UT/{k}`       | Scalar product of the total unit tensor operators of rank $k$ in the orbital and spin spaces        | $(\mathrm{{U}}^{{(k)}}\cdot\mathrm{{T}}^{{(k)}})$ |                 | 0      | $k=0,1$                          |
-| `C/{k},{q}`    | Component $q$ of the Coulomb operator of rank $k$                                                   | $\mathrm{{C}}^{{(k)}}_q$                          |                 | $k$    | $k=0,2,4,6,\ q=-k\ldots k$       |
+| `C/{k},{q}`    | Component $q$ of the Coulomb operator of rank $k$                                                   | $\mathrm{{C}}^{{(k)}}_q$                          | $B^{{(k)}}_q$   | $k$    | $k=0,2,4,6,\ q=-k\ldots k$       |
 ||
 | `L/{q}`        | Component $q$ of the total orbital angular momentum operator                                        | $\mathrm{{L}}_q$                                  |                 | 1      | $q=-1,0,1$                       |
 | `S/{q}`        | Component $q$ of the total spin angular momentum operator                                           | $\mathrm{{S}}_q$                                  |                 | 1      | $q=-1,0,1$                       |
