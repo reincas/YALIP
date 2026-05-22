@@ -138,8 +138,8 @@ materials, `Coupling.SLJM` would be suitable for crystalline hosts, and
 
 ### Basis States
 
-A `States` object acts as a list of states and `states[i]` returns an
-individual`State` object.
+A `States` object acts as a list of basis states in the given coupling scheme
+and `states[i]` returns an individual`State` object.
 The total number of states is obtained from `len(states)` and the following
 code prints the full string representation of every state including the 
 irreducible representations of all quantum numbers:
