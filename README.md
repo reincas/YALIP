@@ -373,7 +373,6 @@ Specification of the material is optional and activates the Judd_Ofelt fit.
 
 A typical initialisation code would look like:
 
-
 ```
 from yall import Cauchy, Coupling, Fit
 
@@ -385,6 +384,48 @@ material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 
 opt = Fit(config, coupling, radial, material)
 ```
+
+### Absorption Lines
+
+The fitting algorithm expects line data derived from a measured absorption
+spectrum in a certain list format.
+Each element of this list represents an absorption line and is itself a list of
+six elements:
+
+1. Energy level index or tuple of overlapping level indices
+2. Short name or tuple of short names of the respective levels
+3. Barycenter energy of the line in cm<sup>-1</sup>
+4. Error margin of the line energy in cm<sup>-1</sup>
+5. Dimensionless oscillator strength of the line
+6. Error margin of the oscillator strength
+
+The level index connects the measurement to specific calculated energy levels.
+Level names currently are for information only.
+It is not used by the algorithm, but may be verified to disentangle crossing
+levels in the future.
+For an index `i` the level name should match `str(ion[i])`.
+
+The following code gives an example measurement representation for a
+Pr<sup>3+</sup> ion:
+
+```
+meas = [
+    [1,      '3H_5',             2365,  4, 196.2e-8,  2.8e-8],
+    [2,      '3H_6',             4485, 18,  77.4e-8,  5.1e-8],
+    [3,      '3F_2',             5105,  5, 283.3e-8,  6.2e-8],
+    [4,      '3F_3',             6467,  7, 637.0e-8, 16.2e-8],
+    [5,      '3F_4',             6958, 10, 244.2e-8, 13.1e-8],
+    [6,      '1G_4',             9883,  7,  26.4e-8,  0.5e-8],
+    [7,      '1D_2',            17026, 20, 199.2e-8, 10.7e-8],
+    [8,      '3P_0',            20859, 12, 180.0e-8, 17.4e-8],
+    [(9, 10), ('3P_1', '1I_6'), 21505, 20, 542.6e-8, 30.5e-8],
+    [11,      '3P_2',           22645, 10, 926.8e-8, 28.7e-8],
+]
+```
+
+Note that realistic error margins are quite important, because the algorithm uses
+them as weight factors for the energy level fit as well as the Judd-Ofelt fit.
+However, you may bypass this feature by setting all error margins to 1.
 
 ## Parameter Sets
 
