@@ -206,7 +206,7 @@ the coupling scheme and the set of radial integrals (in cm<sup>-1</sup>).
 Specification of Judd-Ofelt parameters (in pm<sup>2</sup>) and material is
 optional, but provides access to radiative dipole transition properties.
 
-A typical initialisation code would look like:
+A typical initialisation code for a Pr<sup>3+</sup> ion would look like:
 
 ```
 from yall import Cauchy, Coupling, Levels
@@ -371,7 +371,7 @@ Generation of a `Fit` object requires to specify the electron configuration,
 the coupling scheme and an initial set of radial integrals (in cm<sup>-1</sup>).
 Specification of the material is optional and activates the Judd_Ofelt fit.
 
-A typical initialisation code would look like:
+A typical initialisation code for a Pr<sup>3+</sup> fit would look like:
 
 ```
 from yall import Cauchy, Coupling, Fit
@@ -394,9 +394,9 @@ six elements:
 
 1. Energy level index or tuple of overlapping level indices
 2. Short name or tuple of short names of the respective levels
-3. Barycenter energy of the line in cm<sup>-1</sup>
+3. Measured barycenter energy of the line in cm<sup>-1</sup>
 4. Error margin of the line energy in cm<sup>-1</sup>
-5. Dimensionless oscillator strength of the line
+5. Measured dimensionless oscillator strength of the line
 6. Error margin of the oscillator strength
 
 The level index connects the measurement to specific calculated energy levels.
