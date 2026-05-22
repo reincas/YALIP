@@ -401,9 +401,9 @@ six elements:
 
 The level index connects the measurement to specific calculated energy levels.
 Level names currently are for information only.
-It is not used by the algorithm, but may be verified to disentangle crossing
+They are not used by the algorithm yet, but may be verified to disentangle crossing
 levels in the future.
-For an index `i` the level name should match `str(ion[i])`.
+For a level index `i` the level name should match `str(ion[i])`.
 
 The following code gives an example measurement representation for a
 Pr<sup>3+</sup> ion:
