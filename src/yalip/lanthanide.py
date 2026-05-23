@@ -8,7 +8,7 @@ import logging
 
 from .spectrum import Cauchy, Sellmeier
 
-logger = logging.getLogger("yall.lanthanide")
+logger = logging.getLogger("yalip.lanthanide")
 
 # Symbols of the 15 Lanthanides. The configurations of the triply ionized atoms are 4f0 - 4f14
 LANTHANIDES = ["La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]

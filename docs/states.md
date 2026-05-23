@@ -6,7 +6,7 @@ The following code initialises all states of the Pr<sup>3+</sup> ion in $SLJ$
 coupling:
 
 ```
-from yall import States, Coupling
+from yalip import States, Coupling
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -67,12 +67,12 @@ and `reduced` when the operator name is replaced by a dictionary of weight
 factors:
 
 ```
-from yall import CONST_gs
+from yalip import CONST_gs
 ls_sq = states.reduced({"L": 1.0, "S": CONST_gs}) ** 2
 ```
 
 All matrix elements are returned as double-precision floating-point numbers.
-The YALL package takes particular care to convert the exact integer representation
+The YALIP package takes particular care to convert the exact integer representation
 of signed square roots of rationals from the AMELI repository into their
 floating-point representation with maximum precision, utilising the full resolution
 of the floating-point format.

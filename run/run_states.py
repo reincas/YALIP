@@ -6,7 +6,7 @@
 
 import logging
 
-from yall import Coupling, States
+from yalip import Coupling, States
 
 logger = logging.getLogger("run_states")
 

@@ -24,7 +24,7 @@ import numpy as np
 
 from .ameli import MATRIX_PATH, get_ameli_matrix
 
-logger = logging.getLogger("yall.matrix")
+logger = logging.getLogger("yalip.matrix")
 
 # Translation of alternative names to canonical names
 ALT_NAMES = {

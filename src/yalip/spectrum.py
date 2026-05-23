@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import logging
 import numpy as np
 
-logger = logging.getLogger("yall.spectrum")
+logger = logging.getLogger("yalip.spectrum")
 
 # Physical constants
 CONST_e = 1.6022e-19  # C

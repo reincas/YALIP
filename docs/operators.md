@@ -55,11 +55,11 @@ The following operator matrices are directly available from the AMELI repository
 
 ### Alternative Names
 
-A couple of convenient alternative operator names can be used with the YALL
+A couple of convenient alternative operator names can be used with the YALIP
 package.
 Their translation into AMELI names is given in the following table:
 
-| YALL    | AMELI                                       |
+| YALIP   | AMELI                                       |
 |---------|---------------------------------------------|
 | `Lz`    | `L/0`                                       |
 | `Sz`    | `S/0`                                       |
@@ -77,7 +77,7 @@ Their translation into AMELI names is given in the following table:
 
 ### Perturbation Hamiltonians
 
-The centerpiece of AMELI and YALL are six free-ion perturbation Hamiltonians
+The centerpiece of AMELI and YALIP are six free-ion perturbation Hamiltonians
 resembling a total of 19 radial integrals.
 They are used to calculate the energy levels of a given Lathanide ion.
 In the order of their relative magnitude they are:
@@ -87,13 +87,13 @@ In the order of their relative magnitude they are:
    with the radial integrals $F^2$, $F^4$, and $F^6$
    and the respective angular two-electron operators $\mathbf{f}_2$,
    $\mathbf{f}_4$, and $\mathbf{f}_6$.
-   The YALL package uses the keys `"H1/2"`, `"H1/4"`, and `"H1/6"` for radial 
+   The YALIP package uses the keys `"H1/2"`, `"H1/4"`, and `"H1/6"` for radial 
    parameters (integrals) and angular matrices (operators).
 2. Magnetic spin-orbit interaction of each electron (1st order):
    $\mathbf{H}_2 = \zeta \mathbf{z}$,
    with the radial integral $\zeta$ and the angular one-electron operator
    $\mathbf{z}$.
-   The YALL package uses the key `"H2"` for the radial parameter and the angular
+   The YALIP package uses the key `"H2"` for the radial parameter and the angular
    matrix.
 3. Coulomb inter-configuration interactions (2nd order):
    $\mathbf{H}_3 = \alpha \mathbf{L}^2 + \beta \mathbf{C}_2(\mathrm{G}_2) + \gamma \mathbf{C}_2(\mathrm{SO}(7))$,
@@ -101,25 +101,25 @@ In the order of their relative magnitude they are:
    The respective effective angular two-electron operators $\mathbf{L}^2$,
    $\mathbf{C}_2(\mathrm{G}_2)$, and $\mathbf{C}_2(\mathrm{SO}(7))$ are the squared operator of the total
    orbital angular momentum and the mentioned quadratic Casimir operators.
-   The YALL package uses the keys `"H3/0"`, `"H3/1"`, and `"H3/2"` for radial
+   The YALIP package uses the keys `"H3/0"`, `"H3/1"`, and `"H3/2"` for radial
    parameters and angular matrices.
 4. More Coulomb inter-configuration interactions (2nd order):
    $\mathbf{H}_4 = \sum_c T^c \mathbf{t}_c$, with $c = 2, 3, 4, 6, 7, 8$.
    The radial integrals are $T^c$ and the respective effective angular three-electron operators
    $\mathbf{t}_c$.
-   The YALL package uses the keys `"H4/2"`, `"H4/3"`, `"H4/4"`, `"H4/6"`, `"H4/7"`, and `"H4/8"` for
+   The YALIP package uses the keys `"H4/2"`, `"H4/3"`, `"H4/4"`, `"H4/6"`, `"H4/7"`, and `"H4/8"` for
    radial parameters and angular matrices.
 5. Magnetic interactions of the spin of one electron with the spin (ss) or the orbital angular momentum (soo)
    of another electron (1st order):
    $\mathbf{H}_5 = M^0 \mathbf{m}_0 + M^2 \mathbf{m}_2 + M^4 \mathbf{m}_4$,
    with the Marvin integrals $M^0$, $M^2$, and $M^4$ and the respective angular two-electron operators
    $\mathbf{m}_0$, $\mathbf{m}_2$, and $\mathbf{m}_4$.
-   The YALL package uses the keys `"H5/0"`, `"H5/2"`, and `"H5/4"` for radial parameters and angular matrices.
+   The YALIP package uses the keys `"H5/0"`, `"H5/2"`, and `"H5/4"` for radial parameters and angular matrices.
 6. Magnetic inter-configuration spin-orbit interactions (2nd order):
    $\mathbf{H}_6 = P^2 \mathbf{p}_2 + P^4 \mathbf{p}_4 + P^6 \mathbf{p}_6$,
    with the radial integrals $P^2$, $P^4$, and $P^6$ and the respective angular two-electron operators
    $\mathbf{p}_2$, $\mathbf{p}_4$, and $\mathbf{p}_6$.
-   The YALL package uses the keys `"H6/2"`, `"H6/4"`, and `"H6/6"` for radial parameters and angular matrices.
+   The YALIP package uses the keys `"H6/2"`, `"H6/4"`, and `"H6/6"` for radial parameters and angular matrices.
 
 The first order perturbations are interactions inside the 4f configuration, while
 second order perturbations take interactions with all other configurations into
@@ -136,7 +136,7 @@ means that $J$ is no longer a "good" quantum number.
 
 ### Alternative Radial Integrals
 
-The YALL package supports some definitions of radial parameters which are often found in older literature.
+The YALIP package supports some definitions of radial parameters which are often found in older literature.
 They are automatically converted into the standard set when you use them in your dictionary of radial integrals.
 The attribute `Levels.radial_integrals` always contains the standard set of converted values.
 

@@ -12,7 +12,7 @@ from . import Coupling
 from .spectrum import jo_factors
 from .levels import Levels
 
-logger = logging.getLogger("yall.fit")
+logger = logging.getLogger("yalip.fit")
 
 
 def format_significant(value, num):

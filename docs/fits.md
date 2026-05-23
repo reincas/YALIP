@@ -9,7 +9,7 @@ Specification of the material is optional and activates the Judd_Ofelt fit.
 A typical initialisation code for a Pr<sup>3+</sup> fit would look like:
 
 ```
-from yall import Cauchy, Coupling, Fits
+from yalip import Cauchy, Coupling, Fits
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -80,7 +80,7 @@ Nonlinear fitting can always result in a run-off to unrealistic values or the
 algorithm may get stuck in a local minimum far from the global optimum.
 Fortunately the parameter landscape of lanthanide energy levels is smooth and
 fitting-friendly.
-Therefore, the fast Levenberg-Marquardt algorithm used by YALL
+Therefore, the fast Levenberg-Marquardt algorithm used by YALIP
 (`scipy.optimize.least_squares` with `method='lm'`) usually delivers reasonable
 results.
 Nevertheless it is advisable to perform the optimisation in several stages,

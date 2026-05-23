@@ -10,7 +10,7 @@ optional, but provides access to radiative dipole transition properties.
 A typical initialisation code for a Pr<sup>3+</sup> ion would look like:
 
 ```
-from yall import Cauchy, Coupling, Levels
+from yalip import Cauchy, Coupling, Levels
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -29,7 +29,7 @@ coupling.
 The special key `"base"` fixes the energy of the ground state, all other energy
 levels are shifted accordingly.
 
-The unit of radial parameters is that of an energy, but YALL follows the standard
+The unit of radial parameters is that of an energy, but YALIP follows the standard
 convention in the literature to use wavenumbers in cm<sup>-1</sup> instead.
 A wavenumber is the inverse of the wavelength in vacuum
 
@@ -78,10 +78,10 @@ is initialised, it can be used to calculate the strength of radiative transition
 The Judd-Ofelt parameters in the dictionary `jo` are expected in pm<sup>2</sup>
 and the object `material` must provide a method `refractive_index(k)` which returns
 the refractive index of the material for the given wavenumber in cm<sup>-1</sup>.
-The YALL package provides the classes `Cauchy` and `Sellmeier` for this purpose.
+The YALIP package provides the classes `Cauchy` and `Sellmeier` for this purpose.
 
 There is no universally accepted definition of the line strength of a transition.
-For electric dipole transitions, the YALL package uses the definition
+For electric dipole transitions, the YALIP package uses the definition
 
 $$
 S^\mathrm{ed}_{ij} =

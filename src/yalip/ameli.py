@@ -23,10 +23,10 @@ import requests
 import tempfile
 import zipfile
 
-logger = logging.getLogger("yall.ameli")
+logger = logging.getLogger("yalip.ameli")
 
-AMELI_PATH = Path(user_cache_dir(appname="YALL", appauthor="REINCAS")) / "ameli"
-MATRIX_PATH = Path(user_cache_dir(appname="YALL", appauthor="REINCAS")) / "matrix"
+AMELI_PATH = Path(user_cache_dir(appname="YALIP", appauthor="REINCAS")) / "ameli"
+MATRIX_PATH = Path(user_cache_dir(appname="YALIP", appauthor="REINCAS")) / "matrix"
 
 ZENODO_API = "https://zenodo.org/api"
 ZENODO_RECORD = f"{ZENODO_API}/records"

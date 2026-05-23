@@ -1,4 +1,4 @@
-# YALL 0.9.0 (Yet Another Lanthanide Library)
+# YALIP 0.9.0 (Yet Another Lanthanide Ion Package)
 
 This is a Python 3 package to calculate the energy levels of multi-electron
 systems populating the 4f configuration, which means the lanthanide or
@@ -6,13 +6,13 @@ rare-earth ions from Ce<sup>3+</sup> (4f<sup>1</sup>) to Yb<sup>3+</sup>
 (4f<sup>13</sup>).
 The calculation is based on Racah's tensor algebra using an approach
 introduced in my PhD thesis [[1]](#ref1) and advanced in [[2]](#ref2).
-You find a copy of the [thesis](docs/Dissertation.pdf) and
-[corrections](docs/errata5.pdf) in the folder `docs`.
+You find a copy of the [thesis](private/Dissertation.pdf) and
+[corrections](private/errata5.pdf) in the folder `docs`.
 The original version of the software is available in the GitHub repository
 [Lanthanide-0.3](https://github.com/reincas/Lanthanide-0.3) and the last
 implementation of the original approach in the repository
 [Lanthanide](https://github.com/reincas/Lanthanide).
-However, instead of computing its numerical operator matrices, the YALL package
+However, instead of computing its numerical operator matrices, the YALIP package
 is using the matrix elements from the Zenodo repository
 [AMELI](https://zenodo.org/communities/ameli) calculated and stored in exact
 arithmetic according to [[2]](#ref2).
@@ -22,12 +22,12 @@ arithmetic according to [[2]](#ref2).
 The package is available on PyPI and the installation therefore is possible using `pip`
 
 ```
-pip install yall
+pip install yalip
 ```
 
 ## Usage
 
-The YALL package is designed for three use cases on different abstraction levels.
+The YALIP package is designed for three use cases on different abstraction levels.
 
 ### 1. Class `States`
 
@@ -38,7 +38,7 @@ The following code initialises all basis states of the Pr<sup>3+</sup> ion in $S
 coupling:
 
 ```
-from yall import States, Coupling
+from yalip import States, Coupling
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -54,7 +54,7 @@ by the [class `Levels`](docs/levels.md).
 Typical initialisation code for a Pr<sup>3+</sup> ion looks like:
 
 ```
-from yall import Cauchy, Coupling, Levels
+from yalip import Cauchy, Coupling, Levels
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -74,7 +74,7 @@ a measured absorption spectrum.
 Typical initialisation code for a Pr<sup>3+</sup> ion looks like:
 
 ```
-from yall import Cauchy, Coupling, Fits
+from yalip import Cauchy, Coupling, Fits
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -91,13 +91,13 @@ Some application example scripts are available in the folder [run](run).
 
 ## Logging
 
-The YALL package uses the logger package for status messages.
+The YALIP package uses the logger package for status messages.
 The following code example provides a basic setup to make these messages visible
 on the console:
 
 ```
 import logging
-from yall import Coupling, States
+from yalip import Coupling, States
 
 logger = logging.getLogger("my_script")
 
@@ -122,10 +122,10 @@ if __name__ == "__main__":
 
 ## Caching
 
-The YALL package uses `platformdirs.user_cache_dir()` to create a cache folder
+The YALIP package uses `platformdirs.user_cache_dir()` to create a cache folder
 for files from the AMELI repository and another one for converted floating point
 matrices.
-YALL regularly checks the repository for new versions, but at most twice a day.
+YALIP regularly checks the repository for new versions, but at most twice a day.
 
 The decorator `functools.lru_cache` is used to keep numerical matrices in the
 memory. 

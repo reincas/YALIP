@@ -6,7 +6,7 @@
 
 import logging
 
-from yall import RADIAL, MATERIAL, LANTHANIDES, Coupling, Fits
+from yalip import RADIAL, MATERIAL, LANTHANIDES, Coupling, Fits
 
 logger = logging.getLogger("run_fit")
 

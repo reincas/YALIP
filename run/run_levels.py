@@ -7,7 +7,7 @@
 import logging
 import numpy as np
 
-from yall import MATERIAL, Coupling, Levels
+from yalip import MATERIAL, Coupling, Levels
 
 logger = logging.getLogger("run_levels")
 
