@@ -18,13 +18,13 @@ arithmetic according to [[2]](#ref2).
 
 ## Installation
 
-The package is available on PyPI and the installation therefore is possible using pip
+The package is available on PyPI and the installation therefore is possible using `pip`
 
 ```
-python -m pip install yall
+pip install yall
 ```
 
-## Usage Examples
+## Usage
 
 The YALL package is designed for three use cases on different abstraction levels.
 
@@ -83,6 +83,10 @@ material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 
 opt = Fits(config, coupling, radial, material)
 ```
+
+### Example Scripts
+
+Some application example scripts are available in the folder [run](run).
 
 ## Logging
 
