@@ -12,7 +12,7 @@ product states and then transformed to the $SLJM$ space exploiting the symmetry
 properties of Racah's chain of tensor operators:
 
 $$ \mathbf{S}^2 \to \mathbf{C}_2(\mathrm{SO}(7)) \to \mathbf{C}_2(\mathrm{G}_2)
-\to \mathbf{L}^2 \to \mathbf{J}^2 \to \mathrm{J}_z $$
+\to \mathbf{L}^2 \to \mathbf{J}^2 \to \mathbf{J}_z $$
 
 with the operators of total spin $\mathbf{S}$, total orbital angular momentum
 $\mathbf{L}$, total angular momentum $\mathbf{J}$ and it's magnetic component
