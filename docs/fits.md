@@ -152,7 +152,7 @@ and the result looks like this:
 The table consists of 12 columns:
 
 1. Level index
-2. Level name taken from the list of lines
+2. Level name taken from the list of measured lines
 3. Measured barycenter energy in cm<sup>-1</sup>. Overlapping levels
    are marked by ellipses (`...`).
 4. Error margin of the measured energy in cm<sup>-1</sup>
@@ -164,7 +164,7 @@ The table consists of 12 columns:
 9. Calculated electric dipole oscillator strength in $10^{-8}$
 10. Calculated magnetic dipole oscillator strength in $10^{-8}$
 11. Difference between measured and calculated oscillator strength
-12. Level name
+12. Short level name
 
 Columns 7-11 are only generated if the `Fits` object was initialised with a 
 `materials` argument.
