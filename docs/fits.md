@@ -161,7 +161,7 @@ The table consists of 12 columns:
 7. Measured oscillator strength in $10^{-8}$. Overlapping levels
    are marked by ellipses (`...`).
 8. Error margin of the measured oscillator strength in $10^{-8}$
-9. Calculated electrical dipole oscillator strength in $10^{-8}$
+9. Calculated electric dipole oscillator strength in $10^{-8}$
 10. Calculated magnetic dipole oscillator strength in $10^{-8}$
 11. Difference between measured and calculated oscillator strength
 12. Level name
