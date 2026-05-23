@@ -194,63 +194,63 @@ def str_compare(lines, states, f_calc=None):
         level_type = meas[i]["type"]
         if level_type == "normal":
             name_meas = meas[i]["name"]
-            k_meas = f"{meas[i]["k"]:.0f}"
-            dk_meas = f"({meas[i]["dk"]:.0f})"
-            k_calc = f"{state.energy:.0f}"
-            dk_calc = f"{state.energy - meas[i]["k"]:.1f}"
+            k_meas = f'{meas[i]["k"]:.0f}'
+            dk_meas = f'({meas[i]["dk"]:.0f})'
+            k_calc = f'{state.energy:.0f}'
+            dk_calc = f'{state.energy - meas[i]["k"]:.1f}'
             k_sigma += ((state.energy - meas[i]["k"]) / meas[i]["dk"]) ** 2
             inv_dk += 1 / meas[i]["dk"] ** 2
             if has_strengths:
-                f_meas = f"{meas[i]["f"]:.1f}"
-                df_meas = f"({meas[i]["df"]:.1f})"
-                fed_calc = f"{f_calc.ed[i]:.1f}"
-                fmd_calc = f"{f_calc.md[i]:.1f}"
-                df_calc = f"{f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]:.1f}"
+                f_meas = f'{meas[i]["f"]:.1f}'
+                df_meas = f'({meas[i]["df"]:.1f})'
+                fed_calc = f'{f_calc.ed[i]:.1f}'
+                fmd_calc = f'{f_calc.md[i]:.1f}'
+                df_calc = f'{f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]:.1f}'
                 f_sigma += ((f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]) / meas[i]["df"]) ** 2
                 inv_df += 1 / meas[i]["df"] ** 2
         elif level_type == "overlapped":
             name_meas = meas[i]["name"]
-            k_meas = f"{meas[i]["k"]:.0f}"
-            dk_meas = f"({meas[i]["dk"]:.0f})"
+            k_meas = f'{meas[i]["k"]:.0f}'
+            dk_meas = f'({meas[i]["dk"]:.0f})'
             k = np.array([states[i].energy for i in meas[i]["range"]])
             m = np.array([states[i].mult for i in meas[i]["range"]])
             k = np.sum(k * m) / np.sum(m)
-            k_calc = f"{state.energy:.0f}"
-            dk_calc = f"{k - meas[i]["k"]:.1f}"
+            k_calc = f'{state.energy:.0f}'
+            dk_calc = f'{k - meas[i]["k"]:.1f}'
             k_sigma += ((k - meas[i]["k"]) / meas[i]["dk"]) ** 2
             inv_dk += 1 / meas[i]["dk"] ** 2
             if has_strengths:
-                f_meas = f"{meas[i]["f"]:.1f}"
-                df_meas = f"({meas[i]["df"]:.1f})"
+                f_meas = f'{meas[i]["f"]:.1f}'
+                df_meas = f'({meas[i]["df"]:.1f})'
                 f = sum([f_calc.ed[i] + f_calc.md[i] for i in meas[i]["range"]])
-                fed_calc = f"{f_calc.ed[i]:.1f}"
-                fmd_calc = f"{f_calc.md[i]:.1f}"
-                df_calc = f"{f - meas[i]["f"]:.1f}"
+                fed_calc = f'{f_calc.ed[i]:.1f}'
+                fmd_calc = f'{f_calc.md[i]:.1f}'
+                df_calc = f'{f - meas[i]["f"]:.1f}'
                 f_sigma += ((f - meas[i]["f"]) / meas[i]["df"]) ** 2
                 inv_df += 1 / meas[i]["df"] ** 2
         elif level_type == "continue":
             name_meas = meas[i]["name"]
             k_meas = "..."
             dk_meas = ""
-            k_calc = f"{state.energy:.0f}"
+            k_calc = f'{state.energy:.0f}'
             dk_calc = "..."
             if has_strengths:
                 f_meas = "..."
                 df_meas = ""
-                fed_calc = f"{f_calc.ed[i]:.1f}"
-                fmd_calc = f"{f_calc.md[i]:.1f}"
+                fed_calc = f'{f_calc.ed[i]:.1f}'
+                fmd_calc = f'{f_calc.md[i]:.1f}'
                 df_calc = "..."
         else:
             name_meas = ""
             k_meas = ""
             dk_meas = ""
-            k_calc = f"{state.energy:.0f}"
+            k_calc = f'{state.energy:.0f}'
             dk_calc = ""
             if has_strengths:
                 f_meas = ""
                 df_meas = ""
-                fed_calc = f"{f_calc.ed[i]:.1f}"
-                fmd_calc = f"{f_calc.md[i]:.1f}"
+                fed_calc = f'{f_calc.ed[i]:.1f}'
+                fmd_calc = f'{f_calc.md[i]:.1f}'
                 df_calc = ""
         line = [str(i), name_meas, k_meas, dk_meas, k_calc, dk_calc, name_calc]
         if has_strengths:
