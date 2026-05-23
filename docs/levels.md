@@ -74,7 +74,7 @@ intermediate coupling instead.
 ### Radiative Transitions
 
 If the optional arguments `jo` and `material` are provided when a `Levels` object
-is initialised, it can be used to calculate the strength or radiative transitions.
+is initialised, it can be used to calculate the strength of radiative transitions.
 The Judd-Ofelt parameters in the dictionary `jo` are expected in pm<sup>2</sup>
 and the object `material` must provide a method `refractive_index(k)` which returns
 the refractive index of the material for the given wavenumber in cm<sup>-1</sup>.
