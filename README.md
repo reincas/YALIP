@@ -68,8 +68,8 @@ ion = Levels(config, coupling, radial, jo, material)
 ### 3. Class `Fits`
 
 The [class `Fits`](docs/fits.md) is used to perform energy level and Judd-Ofelt
-fits to find optimised radial integrals and Judd-Ofelt parameters matching a
-measured absorption spectrum.
+fits to determine optimised radial integrals and Judd-Ofelt parameters matching
+a measured absorption spectrum.
 A typical initialisation code for a Pr<sup>3+</sup> looks like:
 
 ```
