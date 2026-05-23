@@ -50,7 +50,7 @@ states = States(config, coupling)
 Calculation of states in intermediate coupling, their energy levels and radiative
 transitions based on given radial integrals and Judd-Ofelt parameters is provided
 by the [class `Levels`](docs/levels.md).
-A typical initialisation code for a Pr<sup>3+</sup> ion looks like:
+Typical initialisation code for a Pr<sup>3+</sup> ion looks like:
 
 ```
 from yall import Cauchy, Coupling, Levels
@@ -70,7 +70,7 @@ ion = Levels(config, coupling, radial, jo, material)
 The [class `Fits`](docs/fits.md) is used to perform energy level and Judd-Ofelt
 fits to determine optimised radial integrals and Judd-Ofelt parameters matching
 a measured absorption spectrum.
-A typical initialisation code for a Pr<sup>3+</sup> ion looks like:
+Typical initialisation code for a Pr<sup>3+</sup> ion looks like:
 
 ```
 from yall import Cauchy, Coupling, Fits
