@@ -91,7 +91,7 @@ Some application example scripts are available in the folder [run](run).
 ## Logging
 
 The YALL package uses the logger package for status messages.
-The following code example shows a basic setup to make these messages visible
+The following code example provides a basic setup to make these messages visible
 on the console:
 
 ```
