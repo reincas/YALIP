@@ -70,7 +70,7 @@ ion = Levels(config, coupling, radial, jo, material)
 The [class `Fits`](docs/fits.md) is used to perform energy level and Judd-Ofelt
 fits to determine optimised radial integrals and Judd-Ofelt parameters matching
 a measured absorption spectrum.
-A typical initialisation code for a Pr<sup>3+</sup> looks like:
+A typical initialisation code for a Pr<sup>3+</sup> ion looks like:
 
 ```
 from yall import Cauchy, Coupling, Fits
