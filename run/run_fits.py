@@ -6,7 +6,7 @@
 
 import logging
 
-from yall import RADIAL, MATERIAL, LANTHANIDES, Coupling, Fit
+from yall import RADIAL, MATERIAL, LANTHANIDES, Coupling, Fits
 
 logger = logging.getLogger("run_fit")
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     config = f"f{num}"
     coupling = Coupling.SLJ
 
-    opt = Fit(config, coupling, radial, material)
+    opt = Fits(config, coupling, radial, material)
     opt.run(lines, stages)
     for line in opt.str_compare():
         logger.info(line)

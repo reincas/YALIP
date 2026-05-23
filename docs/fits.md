@@ -1,4 +1,4 @@
-## Class `Fit`
+## Class `Fits`
 
 This class determines radial integrals and Judd-Ofelt parameters matching a
 measured absorption spectrum.

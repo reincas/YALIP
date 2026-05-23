@@ -295,7 +295,7 @@ def str_compare(lines, states, f_calc=None):
     yield line
 
 
-class Fit:
+class Fits:
     def __init__(self, config, coupling, radial, material=None):
 
         assert isinstance(config, str)
