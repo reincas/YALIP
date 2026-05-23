@@ -6,6 +6,8 @@
 
 from enum import Enum
 
+__version = "0.9.0"
+
 
 class Coupling(Enum):
     Product = 0
