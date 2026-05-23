@@ -12,7 +12,8 @@ The original version of the software is available in the GitHub repository
 [Lanthanide-0.3](https://github.com/reincas/Lanthanide-0.3) and the last
 implementation of the original approach in the repository
 [Lanthanide](https://github.com/reincas/Lanthanide).
-However, the YALL package is using the matrix elements from the Zenodo repository
+However, instead of computing its numerical operator matrices, the YALL package
+is using the matrix elements from the Zenodo repository
 [AMELI](https://zenodo.org/communities/ameli) calculated and stored in exact
 arithmetic according to [[2]](#ref2).
 
