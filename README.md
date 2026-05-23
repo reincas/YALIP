@@ -33,7 +33,7 @@ The YALL package is designed for three use cases on different abstraction levels
 Access to raw numerical representations of states and
 [operator matrices](docs/operators.md) from the AMELI repository is provided by
 the [class `States`](docs/states.md).
-The following code initialises all states of the Pr<sup>3+</sup> ion in $SLJ$
+The following code initialises all basis states of the Pr<sup>3+</sup> ion in $SLJ$
 coupling:
 
 ```
@@ -47,9 +47,9 @@ states = States(config, coupling)
 
 ### 2. Class `Levels`
 
-Calculation of intermediate states, energy levels and radiative transitions
-based on given radial integrals and Judd-Ofelt parameters is provided by the
-[class `Levels`](docs/levels.md).
+Calculation of states in intermediate coupling, their energy levels and radiative
+transitions based on given radial integrals and Judd-Ofelt parameters is provided
+by the [class `Levels`](docs/levels.md).
 A typical initialisation code for a Pr<sup>3+</sup> ion looks like:
 
 ```
