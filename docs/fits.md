@@ -2,14 +2,14 @@
 
 This class determines radial integrals and Judd-Ofelt parameters matching a
 measured absorption spectrum.
-Generation of a `Fit` object requires to specify the electron configuration,
+Generation of a `Fits` object requires to specify the electron configuration,
 the coupling scheme and an initial set of radial integrals (in cm<sup>-1</sup>).
 Specification of the material is optional and activates the Judd_Ofelt fit.
 
 A typical initialisation code for a Pr<sup>3+</sup> fit would look like:
 
 ```
-from yall import Cauchy, Coupling, Fit
+from yall import Cauchy, Coupling, Fits
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -17,7 +17,7 @@ radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, 
           "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
 material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 
-opt = Fit(config, coupling, radial, material)
+opt = Fits(config, coupling, radial, material)
 ```
 
 ### Absorption Measurement
@@ -66,11 +66,11 @@ However, you may bypass this feature by setting all error margins to 1.
 ### Optimisation
 
 The optimisation algorithm is started by calling the method
-`Fit.run(lines, stages=None)` with the measured spectral data and optional
+`Fits.run(lines, stages=None)` with the measured spectral data and optional
 instructions for multiple stages of the energy level fit.
 Without the second parameter only a Judd-Ofelt fit is performed keeping the
 initial radial integrals.
-The method returns the attribute `Fit.ion`, which is a
+The method returns the attribute `Fits.ion`, which is a
 [`Levels` object](levels.md) with the optimised parameters.
 
 In contrast to the linear Judd-Ofelt fit, the energy level fit is a nonlinear
@@ -106,7 +106,7 @@ level calculation, but not optimize it.
 `"H5fix"` and `"H6fix"` are often used abbreviations for the fixed relationships
 `{"H5/0": 1.0, "H5/2": 0.56, "H5/4": 0.38}` and 
 `{"H6/2": 1.0, "H6/4": 0.75, "H6/6": 0.50}`, respectively.
-If the `Fit` object was initialised with a materials object, the last stage of
+If the `Fits` object was initialised with a materials object, the last stage of
 the energy-level fit will be followed by a Judd-Ofelt fit.
 
 In order to monitor the fitting progress in more detail, you can also call the
@@ -119,7 +119,7 @@ for stage in stages:
 
 ### Visualisation
 
-For a quick visualisation of the fitting results, the method `Fit.str_compare()`
+For a quick visualisation of the fitting results, the method `Fits.str_compare()`
 generates a text table line-by-line:
 
 ```
@@ -166,7 +166,7 @@ The table consists of 12 columns:
 11. Difference between measured and calculated oscillator strength
 12. Level name
 
-Columns 7-11 are only generated if the `Fit` object was initialised with a 
+Columns 7-11 are only generated if the `Fits` object was initialised with a 
 `materials` argument.
 The final line contains four elements:
 
@@ -176,7 +176,7 @@ The final line contains four elements:
 4. Weighted mean deviation of measured and calculated oscillator strengths
    in $10^{-8}$
 
-The weighted mean deviation of measured and calculated energies `Fit.sigma_k` is 
+The weighted mean deviation of measured and calculated energies `Fits.sigma_k` is 
 given by the expression 
 
 $$
@@ -186,7 +186,7 @@ $$
 $$
 
 and the weighted mean deviation of measured and calculated oscillator strengths
-`Fit.sigma_f` is
+`Fits.sigma_f` is
 
 $$
 \sigma_f = \sqrt{\frac{

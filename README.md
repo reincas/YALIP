@@ -65,15 +65,15 @@ material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 ion = Levels(config, coupling, radial, jo, material)
 ```
 
-### 3. Class `Fit`
+### 3. Class `Fits`
 
-The [class `Fit`](docs/fit.md) is used to perform energy level and Judd-Ofelt
+The [class `Fits`](docs/fits.md) is used to perform energy level and Judd-Ofelt
 fits to find optimised radial integrals and Judd-Ofelt parameters matching a
 measured absorption spectrum.
 A typical initialisation code for a Pr<sup>3+</sup> looks like:
 
 ```
-from yall import Cauchy, Coupling, Fit
+from yall import Cauchy, Coupling, Fits
 
 config = "f2"
 coupling = Coupling.SLJ
@@ -81,7 +81,7 @@ radial = {"base": 327.39, "H1/2": 68576.05, "H1/4": 49972.76, "H1/6": 32415.29, 
           "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
 material = Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6)
 
-opt = Fit(config, coupling, radial, material)
+opt = Fits(config, coupling, radial, material)
 ```
 
 ## Logging
