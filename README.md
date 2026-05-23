@@ -6,8 +6,8 @@ rare-earth ions from Ce<sup>3+</sup> (4f<sup>1</sup>) to Yb<sup>3+</sup>
 (4f<sup>13</sup>).
 The calculation is based on Racah's tensor algebra using an approach
 introduced in my PhD thesis [[1]](#ref1) and advanced in [[2]](#ref2).
-You find a copy of the [thesis](private/Dissertation.pdf) and
-[corrections](private/errata5.pdf) in the folder `docs`.
+You find a copy of the [thesis](docs/Dissertation.pdf) and
+[corrections](docs/errata5.pdf) in the folder `docs`.
 The original version of the software is available in the GitHub repository
 [Lanthanide-0.3](https://github.com/reincas/Lanthanide-0.3) and the last
 implementation of the original approach in the repository
