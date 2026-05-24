@@ -7,7 +7,7 @@
 import logging
 import numpy as np
 
-from yalip import MATERIAL, Coupling, Levels
+from yalip import MATERIAL, Coupling, Levels, ion2config
 
 logger = logging.getLogger("run_levels")
 
@@ -37,8 +37,8 @@ if __name__ == "__main__":
               "H3/0": 16.99, "H3/1": -417.98, "H3/2": 1371, "H5fix": 0.19, "H6fix": 1.67}
     jo = {"JO/2": 1.981, "JO/4": 4.645, "JO/6": 6.972}
 
-    num = 2
-    config = f"f{num}"
+    name = "Pr3+"
+    config = ion2config(name)
     coupling = Coupling.SLJ
 
     ion = Levels(config, coupling, radial, jo, material)

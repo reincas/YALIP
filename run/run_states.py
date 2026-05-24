@@ -6,7 +6,7 @@
 
 import logging
 
-from yalip import Coupling, States
+from yalip import Coupling, States, ion2config
 
 logger = logging.getLogger("run_states")
 
@@ -31,8 +31,8 @@ def init_logger(file_name=None, level=logging.INFO):
 if __name__ == "__main__":
     init_logger(level=logging.DEBUG)
 
-    num = 2
-    config = f"f{num}"
+    name = "Pr3+"
+    config = ion2config(name)
     coupling = Coupling.SLJM
     states = States(config, coupling)
     logger.info(states)
