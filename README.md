@@ -91,7 +91,7 @@ Some application example scripts are available in the folder [run](run).
 
 ## Parameter Sets
 
-The YALIP package provides some sets of radial integrals and Judd-Ofelt parameters for lanthanide ions as well as
+The YALIP package provides some sets of radial integrals and Judd-Ofelt parameters of lanthanide ions as well as
 spectral refractive index parameters for some materials from the literature.
 For details see the source code of [`lanthanide.py`](src/yalip/lanthanide.py).
 
