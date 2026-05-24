@@ -4,7 +4,8 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 #
-# This module provides a collection of convenient parameter sets from the literature.
+# This module provides a collection of convenient parameter sets from
+# the literature.
 #
 #   [1]  W. T. Carnall, G. L. Goodman, K. Rajnak, and R. S. Rana
 #        "A systematic analysis of the spectra of the lanthanides doped
@@ -19,7 +20,8 @@
 #
 #   [3]  Reinhard Caspary
 #        "Applied Rare-Earth Spectroscopy for Fiber Laser Optimization"
-#        Dissertation, Technical university Braunschweig, published with Shaker, Aachen, 2002
+#        Dissertation, Technical university Braunschweig,
+#        published with Shaker, Aachen, 2002
 #
 #   [4]  Dimitar N. Petrov, B.M. Angelov
 #        "Spin – Orbit interaction in Yb3+ – Ground level and nephelauxetic
@@ -28,7 +30,8 @@
 #        https://doi.org/10.1016/j.chemphys.2019.110416
 #
 #   [5]  L. Wetenkamp
-#        Charakterisierung von laseraktiv dotierten Schwermetallfluorid-Gläsern und Faserlasern
+#        Charakterisierung von laseraktiv dotierten Schwermetallfluorid-
+#        Gläsern und Faserlasern
 #        Dissertation, Technical university Braunschweig, 1991
 #
 #   [6]  I. H. Malitson
