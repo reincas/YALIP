@@ -12,7 +12,6 @@
 import math
 from dataclasses import dataclass
 import logging
-from enum import Enum
 
 import numpy as np
 from scipy.optimize import least_squares
@@ -280,9 +279,9 @@ class MeasStrengths(MeasBase):
             ed = self.strengths.ed[i]
             md = self.strengths.md[i]
             if isinstance(meas.level, int):
-                diff = meas.value - (self.strengths.ed[i] + self.strengths.md[i])
+                diff = (self.strengths.ed[i] + self.strengths.md[i]) - meas.value
             elif isinstance(meas.level, tuple):
-                diff = meas.value - sum(self.strengths.ed[j] + self.strengths.md[j] for j in meas.level)
+                diff = sum(self.strengths.ed[j] + self.strengths.md[j] for j in meas.level) - meas.value
             else:
                 diff = meas.value
             name = self.names[i]
