@@ -145,7 +145,8 @@ def config2ion(config):
     assert isinstance(config, str)
     assert config[:1].lower() == "f"
     num = int(config[1:])
-    assert 0 <= num < len(LANTHANIDES)
+    print(num)
+    assert 0 <= num < len(LANTHANIDES), f">{num}<"
     return f"{LANTHANIDES[num]}3+"
 
 
