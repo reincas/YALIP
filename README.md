@@ -127,8 +127,8 @@ for files from the AMELI repository and another one for converted floating point
 matrices.
 YALIP regularly checks the repository for new versions, but at most twice a day.
 
-The decorator `functools.lru_cache` is used to keep numerical matrices in the
-memory. 
+A local HDF5 cache file is used to store converted matrices.
+Used matrices are also cached in the memory (`functools.lru_cache`). 
 
 ## License
 

@@ -3,6 +3,12 @@
 # <reinhard.caspary@phoenixd.uni-hannover.de>                            #
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
+#
+# This module is used to perform energy level and Judd-Ofelt fits to
+# determine optimised radial integrals and Judd-Ofelt parameters matching
+# measured absorption lines through the class `Fits`.
+#
+##########################################################################
 
 import logging
 import numpy as np
@@ -16,6 +22,9 @@ logger = logging.getLogger("yalip.fit")
 
 
 def format_significant(value, num):
+    """ Return floating point string representation of the given value rounded to the given number of significant
+    digits."""
+
     value = f"{value:.{num}g}"
     if 'e' in value:
         value = f"{float(value):.15f}".rstrip('0').rstrip('.')
@@ -23,15 +32,23 @@ def format_significant(value, num):
 
 
 def format_params(params, num):
+    """ Return string representation of the given parameter set rounded to the given number of significant digits. """
+
     return ", ".join([f"'{k}': {format_significant(params[k], num)}" for k in sorted(params.keys())])
 
 
 def format_fixed(params, num):
+    """ Return string representation of the given parameter set rounded to the given number of decimal places. """
+
     return ", ".join([f"'{k}': {params[k]:.{num}f}" for k in sorted(params.keys())])
 
 
 class LevelFit:
+    """ This class is used to perform an energy level fit using the Levenberg-Marquardt algorithm. """
+
     def __init__(self, matrices, mult, lines):
+        """ Store operator matrices, state multiplicities, and measured absorption lines. """
+
         self.matrices = matrices
         self.mult = mult
         self.lines = lines
@@ -117,7 +134,7 @@ class LevelFit:
 
         self.params = self.params | dict(zip(names, values))
 
-    def fit(self, opt_names):
+    def run(self, opt_names):
         """ Perform an energy level fit by optimizing the given radial integrals to match measured energy levels. """
 
         def calculate(values):
@@ -131,13 +148,17 @@ class LevelFit:
 
 
 def judd_ofelt_fit(ion, lines):
+    """ Perform a Judd-Ofelt fit using a linear least squares operation. """
+
     assert isinstance(ion, Levels)
     assert isinstance(lines, list)
 
+    # Prepare oscillator strength factors
     factor_ed, factor_md = jo_factors(ion.mult[0], ion.energies, ion.material)
     fed = np.column_stack((ion.dipole.U2[:, 0], ion.dipole.U4[:, 0], ion.dipole.U6[:, 0])) * factor_ed[:, None]
     fmd = ion.dipole.LS[:, 0] * factor_md
 
+    # Build matrix A of calculated values and result vector b of measured values
     A = np.zeros((len(lines), 3), dtype=float)
     b = np.zeros(len(lines), dtype=float)
     for i, (idx, f_meas, df_meas) in enumerate(lines):
@@ -149,10 +170,12 @@ def judd_ofelt_fit(ion, lines):
             b[i] = (f_meas - np.sum(fmd[idx])) / df_meas
             A[i, :] = np.sum(fed[idx, :], axis=0) / df_meas
 
+    # Perform linear least squares fit resulting in the Judd-Ofelt parameters omega
     omega, residuals, rank, _ = np.linalg.lstsq(A, b, rcond=None)
     chi2 = residuals[0]
     assert rank == 3
 
+    # Return parameter dictionary and weighted mean deviation of measured and calculated oscillator strengths
     df_meas = np.array([line[2] for line in lines])
     sigma = float(np.sqrt(chi2 / np.sum(1 / df_meas ** 2))) * 1e8
     judd_ofelt = {f"JO/{2 * i + 2}": value for i, value in enumerate(omega)}
@@ -160,6 +183,8 @@ def judd_ofelt_fit(ion, lines):
 
 
 def str_compare(lines, states, f_calc=None):
+    """ Generate text table comparing measured and calculated absorption lines. """
+
     assert isinstance(lines, list)
     size = set(len(line) for line in lines)
     assert len(size) == 1
@@ -296,6 +321,9 @@ def str_compare(lines, states, f_calc=None):
 
 
 class Fits:
+    """ This class is used to perform energy level and Judd-Ofelt fits to determine optimised radial integrals and
+    Judd-Ofelt parameters matching measured absorption lines. """
+
     def __init__(self, config, coupling, radial, material=None):
 
         assert isinstance(config, str)
@@ -348,7 +376,7 @@ class Fits:
         return self.ion.judd_ofelt
 
     def run(self, lines, stages=None):
-        """ Multi-stage energy level fit to measured absorption lines."""
+        """ Multi-stage combined energy level and Judd_ofelt fit to measured absorption lines. """
 
         # Measured absorption lines
         assert isinstance(lines, list)
@@ -379,7 +407,7 @@ class Fits:
                 logger.info(f"Stage {i}: Initial dk: {dk:.2f}, parameters: {p}")
 
                 names = [n for n in names if n != "base" and not n.startswith(":")]
-                opt.fit(names)
+                opt.run(names)
                 self.radial |= opt.params
 
                 p = format_params(opt.params, 6)
@@ -400,6 +428,8 @@ class Fits:
         return self.ion
 
     def str_compare(self):
+        """ Generate text table comparing measured and calculated absorption lines. """
+
         assert self.lines is not None, "Run an energy level fit first!"
 
         lines = [line.copy() for line in self.lines]

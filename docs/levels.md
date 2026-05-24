@@ -79,6 +79,19 @@ The Judd-Ofelt parameters in the dictionary `jo` are expected in pm<sup>2</sup>
 and the object `material` must provide a method `refractive_index(k)` which returns
 the refractive index of the material for the given wavenumber in cm<sup>-1</sup>.
 The YALIP package provides the classes `Cauchy` and `Sellmeier` for this purpose.
+The `Cauchy` class uses the Schott Glass Dispersion formula
+
+$$
+n = A\lambda^{-4} + B\lambda^{-2} + C + D\lambda^2 + E\lambda^4
+$$
+
+and `Sellmeier` the Sellmeier formula
+
+$$
+n = \sqrt{1 + \frac{B_1 \lambda^2}{\lambda^2 - C_1^2}
+    + \frac{B_2 \lambda^2}{\lambda^2 - C_2^2}
+    + \frac{B_3 \lambda^2}{\lambda^2 - C_3^2}}
+$$
 
 There is no universally accepted definition of the line strength of a transition.
 For electric dipole transitions, the YALIP package uses the definition

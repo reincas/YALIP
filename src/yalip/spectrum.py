@@ -3,6 +3,12 @@
 # <reinhard.caspary@phoenixd.uni-hannover.de>                            #
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
+#
+# This module provides the refractive index material classes `Cauchy` and
+# `Sellmeier`. It also contains functions for the calculation of radiative
+# transition properties.
+#
+##########################################################################
 
 from dataclasses import dataclass
 import logging
@@ -87,6 +93,8 @@ class Sellmeier:
     n^2 = 1 + sum_i(B_i * L^2 / (L^2 - C_i^2). """
 
     def __init__(self, B1, B2, B3, C1, C2, C3):
+        """ Store the Sellmeier coefficients. """
+
         self.B = np.array([B1, B2, B3])
         self.C2 = np.array([C1, C2, C3]) ** 2
 
@@ -164,6 +172,9 @@ def line_strengths(judd_ofelt, dipole, mult):
 
 
 def oscillator_strengths(judd_ofelt, dipole, mult, k, material):
+    """ Calculate and return matrices containing the oscillator strengths of all electric and magnetic dipole
+    transitions. Rows refer to final and columns to initial states. """
+
     S = line_strengths(judd_ofelt, dipole, mult)
     dk = get_delta_k(k)
     n = material.refractive_index(dk)
@@ -181,6 +192,9 @@ def oscillator_strengths(judd_ofelt, dipole, mult, k, material):
 
 
 def radiative_rates(judd_ofelt, dipole, mult, k, material):
+    """ Calculate and return matrices containing the radiative transition rates of all electric and magnetic dipole
+    transitions in emission. Rows refer to final and columns to initial states. """
+
     S = line_strengths(judd_ofelt, dipole, mult)
     dk = get_delta_k(k)
     n = material.refractive_index(dk)

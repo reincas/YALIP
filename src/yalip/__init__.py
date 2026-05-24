@@ -3,10 +3,14 @@
 # <reinhard.caspary@phoenixd.uni-hannover.de>                            #
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
+#
+# This module provides all names exported by the package.
+#
+##########################################################################
 
 from enum import Enum
 
-__version = "0.9.0"
+__version__ = "0.9.0"
 
 
 class Coupling(Enum):

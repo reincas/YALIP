@@ -5,7 +5,16 @@
 ##########################################################################
 #
 # This module provides the interface to the AMELI repository of tensor
-# matrices on Zenodo.
+# operator matrices on Zenodo. The symbolic matrix elements are
+# carefully converted to floating point values at full IEEE double
+# precision.
+#
+# A cache of local copies of the AMELI files is maintained. Since the
+# repository is expected to be stable, it is checked for new versions
+# at most twice a day.
+#
+# Converted matrices are cached in a local HDF5 cache file and in memory,
+# the latter using functools.lru_cache.
 #
 ##########################################################################
 
@@ -54,6 +63,9 @@ RECORDS = {
 
 @total_ordering
 class Version:
+    """ Class of a version string with major, minor, and patch numbers. Provides convenient value comparison
+    operations. """
+
     def __init__(self, version_str):
         self.original_str = version_str
         cleaned = version_str.lower().lstrip('v')
@@ -204,6 +216,8 @@ def update_version(version, path):
 
 
 def remove_vault(config):
+    """ Remove the cache file of converted matrices. """
+
     path = MATRIX_PATH / config
     if path.exists():
         for file in path.iterdir():
@@ -316,6 +330,8 @@ def decode_uint_array(meta, name):
 ##########################################################################
 
 def matrix_path(config, state_space, name):
+    """ Return path to the given AMELI matrix container. """
+
     name = name.replace("/", "_").replace(",", "_")
     path = AMELI_PATH / config / state_space.lower() / f"{name}.zdc"
     if not path.exists():
@@ -379,6 +395,8 @@ def read_json(path, item):
 
 @lru_cache
 def get_ameli_matrix(name, config, state_space):
+    """ Read and convert AMELI matrix. """
+
     assert state_space in ("slj_reduced", "slj", "sljm", "product")
     path = matrix_path(config, state_space, name)
     return read_matrix(path, "data/matrix.hdf5")
@@ -386,6 +404,8 @@ def get_ameli_matrix(name, config, state_space):
 
 @lru_cache
 def get_ameli_transform(config):
+    """ Read basis states from the AMELI container transform.zdc. """
+
     update(config)
     path = AMELI_PATH / config / "transform.zdc"
     meta = read_json(path, "data/transform.json")

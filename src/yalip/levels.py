@@ -3,6 +3,12 @@
 # <reinhard.caspary@phoenixd.uni-hannover.de>                            #
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
+#
+# This module provides access to states in intermediate coupling, their
+# energy levels and radiative transitions based on given radial integrals
+# and Judd-Ofelt parameters through the class `Levels`.
+#
+##########################################################################
 
 import logging
 import numpy as np
@@ -59,7 +65,7 @@ class IntermediateState(State):
 
 
 class IntermediateList(StateList):
-    """ Class containing a list of StateM objects representing an electron state in an intermediate SLJM coupling. """
+    """ Class containing a list of IntermediateState objects. """
 
     def __init__(self, base_states, energies, transform):
         """ Store the given SLJM states, the energies of all states and the matrix containing the linear combination
@@ -160,10 +166,14 @@ class Levels:
 
     @property
     def energies(self):
+        """ List of state energies. """
+
         return self.states.energies
 
     @property
     def mult(self):
+        """ List of state multiplicities. """
+
         return self.states.mult
 
     def __len__(self):

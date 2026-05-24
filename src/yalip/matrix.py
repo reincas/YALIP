@@ -4,17 +4,8 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 #
-# This module provides the calculation of matrices of higher-order tensor
-# operators in the determinantal product space of a given electron
-# configuration based on unit tensor operators from the module "unit".
-#
-# The function get_matrix() returns a Matrix object containing a given
-# tensor operator matrix in a given coupling scheme. The matrices of
-# certain tensor operators, namely the perturbation hamiltonians are
-# eventually stored in the HDF5 file cache in SLJM and SLJ coupling.
-#
-# Matrix objects support diagonalisation and elementary arithmetic
-# operations to build for linear combinations of these matrices.
+# This module acts as interface to the HDF5 cache of converted matrices.
+# It also generates and diagonalises perturbation Hamiltonians.
 #
 ##########################################################################
 
@@ -165,24 +156,34 @@ def get_matrix(name, config, state_space):
     assert isinstance(config, str)
     assert isinstance(state_space, str)
 
+    # Create cache file folder
     path = MATRIX_PATH / config
     if not path.exists():
         path.mkdir(parents=True)
 
+    # Linear combination of matrices
     if isinstance(name, dict):
         matrix = 0.0
         for sub_name, sub_weight in name.items():
             matrix += sub_weight * get_matrix(sub_name, config, state_space)
         return matrix
 
+    # Use alternative name
     if name in ALT_NAMES:
         return get_matrix(ALT_NAMES[name], config, state_space)
 
+    # Read matrix
     vault = path / f"{state_space}.hdf5"
     with h5py.File(vault, "a") as fp:
+
+        # Convert and store AMELI matrix
         if name not in fp.keys():
             matrix = get_ameli_matrix(name, config, state_space)
             fp.create_dataset(name, data=matrix)
+
+        # Read converted matrix from HDF5 cache
         else:
             matrix = np.array(fp[name])
+
+    # Return float representation of the matrix
     return matrix

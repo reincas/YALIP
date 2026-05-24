@@ -4,12 +4,11 @@
 # This program is free software under the terms of the MIT license.      #
 ##########################################################################
 #
-# This module provides classes for the representation of single states
-# and lists of all states of a configuration in the determinantal product
-# state space and in SLJM, SLJ and intermediate coupling. The main tasks
-# of these objects is the generation of short and long string
-# representations of the states and the provision of transformation
-# matrices between the different coupling schemes.
+# This module provides access to basis states and the respective
+# operator matrices from the AMELI repository through the class `States`.
+# Determinantal product states and states in SLJM coupling are available,
+# as well as stretched states with M=J (SLJ coupling). Matrices of
+# reduced elements are available in SLJ coupling.
 #
 ##########################################################################
 
@@ -26,6 +25,8 @@ SPECTRAL = "spdfghiklmnoqrtuvwxyz"
 
 
 def norm_magnetic(value):
+    """ Eventually add trailing plus sign to given integer or half-integer string representation. """
+
     if value.endswith("/2"):
         v = int(value[:-2])
     else:
