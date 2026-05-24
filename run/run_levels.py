@@ -42,40 +42,40 @@ if __name__ == "__main__":
     coupling = Coupling.SLJ
 
     ion = Levels(config, coupling, radial, jo, material)
-    logger.info("List of states in intermediate coupling:")
+    print("List of states in intermediate coupling:")
     for state in ion.str_levels(min_weight=0.05):
-        logger.info(f"    {state}")
+        print(f"    {state}")
 
     reduced = ion.dipole
     R = np.column_stack((reduced.U2[1:, 0], reduced.U4[1:, 0], reduced.U6[1:, 0], reduced.LS[1:, 0]))
-    logger.info("Squared reduced matrix elements (U2, U4, U6, LS):")
+    print("Squared reduced matrix elements (U2, U4, U6, LS):")
     for line in R:
         line = "  ".join([f"{v:7.4f}" for v in line])
-        logger.info(f"    {line}")
+        print(f"    {line}")
 
     f = ion.oscillator_strengths()
     f = np.column_stack((f.ed[1:, 0], f.md[1:, 0])) * 1e8
-    logger.info("GSA oscillator strengths (ed, md) in 1e-8:")
+    print("GSA oscillator strengths (ed, md) in 1e-8:")
     for line in f:
         line = "  ".join([f"{v:7.1f}" for v in line])
-        logger.info(f"    {line}")
+        print(f"    {line}")
 
     A = ion.radiative_rates()
     i = len(ion) - 1
     A = np.column_stack((A.ed[i - 1::-1, i], A.md[i - 1::-1, i]))
-    logger.info("Radiative emission rates (ed, md) to ground state in 1/s:")
+    print("Radiative emission rates (ed, md) to ground state in 1/s:")
     for line in A:
         line = "  ".join([f"{v:7.0f}" for v in line])
-        logger.info(f"    {line}")
+        print(f"    {line}")
 
     t = ion.life_times()[1:]
-    logger.info("Radiative life times in ms:")
+    print("Radiative life times in ms:")
     line = "  ".join([f"{v:.2f}" for v in t * 1000])
-    logger.info(f"    {line}")
+    print(f"    {line}")
 
     beta = ion.branching_ratios()
     i = len(ion) - 1
     beta = beta[i - 1::-1, i]
-    logger.info("Branching ratios:")
+    print("Branching ratios:")
     line = "  ".join([f"{v:.3f}" for v in beta])
-    logger.info(f"    {line}")
+    print(f"    {line}")

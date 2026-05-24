@@ -115,4 +115,4 @@ if __name__ == '__main__':
     opt.run(lines, stages)
 
     for line in opt.table():
-        logger.info(line)
+        print(line)

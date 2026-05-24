@@ -35,13 +35,13 @@ if __name__ == "__main__":
     config = ion2config(name)
     coupling = Coupling.SLJM
     states = States(config, coupling)
-    logger.info(states)
-    logger.info(f"Number of states: {len(states)}")
+    print(states)
+    print(f"Number of states: {len(states)}")
 
     matrix = states.matrix("H1/2")
-    logger.info(f"Matrix shape: {matrix.shape}")
+    print(f"Matrix shape: {matrix.shape}")
 
-    logger.info(f"List of {coupling.name} coupling states:")
+    print(f"List of {coupling.name} coupling states:")
     for state in states:
-        logger.info(f"    {state}")
+        print(f"    {state}")
 
