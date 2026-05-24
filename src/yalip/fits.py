@@ -9,17 +9,24 @@
 # measured absorption lines through the class `Fits`.
 #
 ##########################################################################
-
+import math
+from dataclasses import dataclass
 import logging
+from enum import Enum
+
 import numpy as np
 from scipy.optimize import least_squares
 
 from . import Coupling
-from .spectrum import jo_factors
+from .spectrum import jo_factors, Transition
 from .levels import Levels
 
 logger = logging.getLogger("yalip.fit")
 
+
+##########################################################################
+# Formatter functions
+##########################################################################
 
 def format_significant(value, num):
     """ Return floating point string representation of the given value rounded to the given number of significant
@@ -42,6 +49,333 @@ def format_fixed(params, num):
 
     return ", ".join([f"'{k}': {params[k]:.{num}f}" for k in sorted(params.keys())])
 
+
+##########################################################################
+# Result table
+##########################################################################
+
+@dataclass
+class MeasLine:
+    """ Dataclass containing measured values. """
+
+    level: int | tuple[int, ...] | None
+    name: str
+    value: float | str
+    delta: float | str
+
+
+class MeasLines:
+    """ This class provides level-based access to measured absorption lines. """
+
+    def __init__(self, lines, num_states):
+        """ Extract and store measurement data for each energy level. """
+
+        assert isinstance(lines, list)
+        assert isinstance(num_states, int)
+        self.num_states = num_states
+
+        # Extract measured data for each energy level
+        self.lines = [MeasLine(None, "", "", "") for i in range(num_states)]
+        for line in lines:
+            idx, name, value, delta = line[:4]
+            if isinstance(idx, tuple):
+                assert all(a - b == 1 for a, b in zip(idx[1:], idx[:-1]))
+                self.lines[idx[0]] = MeasLine(idx, name[0], value, delta)
+                for i, n in zip(idx[1:], name[1:]):
+                    self.lines[i] = MeasLine(None, n, "...", "")
+            else:
+                self.lines[idx] = MeasLine(idx, name, value, delta)
+
+    def __getitem__(self, i):
+        """ Return measurement data of the given level as MeasLine object. """
+
+        return self.lines[i]
+
+    def __iter__(self):
+        """ Generate measurement data of each level as MeasLine object. """
+
+        for line in self.lines:
+            yield line
+
+
+class MeasBase:
+    """ Base class for level-based comparison classes. """
+
+    val_fmt: dict
+    row_fmt: str
+    levels: list
+
+    def __getitem__(self, i):
+        """ Return measured and calculated data of the given level as MeasEnergy object. """
+
+        return self.levels[i]
+
+    def __iter__(self):
+        """ Generate measured and calculated data of each level as MeasEnergy object. """
+
+        for level in self.levels:
+            yield level
+
+    def get_sigma(self, name_delta, name_diff):
+        """ Return mean error margin and weighted average deviation of measured and calculated values. """
+
+        levels = [level for level in self.levels if not isinstance(getattr(level, name_delta), str)]
+        delta, diff = zip(*[(getattr(level, name_delta), getattr(level, name_diff)) for level in levels])
+        weights = [1 / value for value in delta]
+
+        mean = sum(delta) / len(delta)
+        sigma = math.sqrt(sum((w * v) ** 2 for w, v in zip(weights, diff)) / sum(w ** 2 for w in weights))
+        return mean, sigma
+
+    def str_values(self, name, fmt):
+        """ Returns formatted level values as strings and their maximum size. """
+
+        values = [getattr(level, name) for level in self.levels]
+        values = [value if isinstance(value, str) else format(value, fmt) for value in values]
+        size = max(len(value) for value in values)
+        return values, size
+
+    def row_str(self, row, sizes):
+        """ Return given row elements as string. """
+
+        return self.row_fmt.format(*[format(v, f">{s}s") for v, s in zip(row, sizes)])
+
+    def iter_table(self, head, foot):
+        """ Generate table lines with given header and footer. """
+
+        assert isinstance(head, list)
+        assert isinstance(foot, list)
+
+        # Data lines and columns widths
+        data, sizes = zip(*[self.str_values(name, fmt) for name, fmt in self.val_fmt.items()])
+
+        # Separation line
+        sep = [size * "-" for size in sizes]
+        fmt = self.row_fmt.replace("|", "+").replace(" ", "-")
+        sep = fmt.format(*sep)
+
+        # Generate text table
+        yield self.row_str(head, sizes)
+        yield sep
+        for row in list(zip(*data)):
+            yield self.row_str(list(row), sizes)
+        yield sep
+        yield self.row_str(foot, sizes)
+
+
+@dataclass
+class MeasEnergy:
+    """ Dataclass containing measured and calculated wavenumbers. """
+
+    level: int
+    line_name: str
+    meas: float | str
+    delta: float | str
+    calc: float
+    diff: float | str
+    name: str
+
+
+class MeasEnergies(MeasBase):
+    """ This class provides a level-based comparison of measured and calculated wavenumbers. """
+
+    val_fmt = {
+        "level": "d", "line_name": "s",
+        "meas": ".0f", "delta": ".0f", "calc": ".0f", "diff": ".1f",
+        "name": "s",
+    }
+    row_fmt = "{}  {} | {}  {}  {}  {} | {}"
+
+    def __init__(self, lines, names, energies, mult):
+        assert isinstance(lines, list)
+        assert isinstance(names, list)
+        assert isinstance(energies, list)
+        assert isinstance(mult, list)
+        assert len(energies) == len(mult) == len(names)
+
+        self.names = names
+        self.energies = energies
+        self.mult = mult
+
+        # Prepare line measurement objects
+        self.num_states = len(names)
+        lines = [line[:4] for line in lines]
+        self.lines = MeasLines(lines, self.num_states)
+
+        # Prepare measured and calculated data for all energy levels
+        self.levels = []
+        for i in range(self.num_states):
+            meas = self.lines[i]
+            calc = self.energies[i]
+            if isinstance(meas.level, int):
+                diff = self.energies[i] - meas.value
+            elif isinstance(meas.level, tuple):
+                weight = sum(self.mult[j] for j in meas.level)
+                diff = sum(self.energies[j] * self.mult[j] for j in meas.level) / weight - meas.value
+            else:
+                diff = meas.value
+            name = self.names[i]
+            self.levels.append(MeasEnergy(i, meas.name, meas.value, meas.delta, calc, diff, name))
+
+        # Mean error margin and weighted average deviation of measured and calculated values
+        self.mean, self.sigma = self.get_sigma("delta", "diff")
+
+    def table(self):
+        """ Generate line strings of result table. """
+
+        # Header elements
+        head = ["", "", "kmeas", "", "kcalc", "", ""]
+
+        # Footer elements
+        sigma = format(self.sigma, self.val_fmt["diff"])
+        mean = format(self.mean, self.val_fmt["delta"])
+        foot = ["", "", "", mean, "", sigma, ""]
+
+        # Generate table lines
+        yield from self.iter_table(head, foot)
+
+
+@dataclass
+class MeasStrength:
+    """ Dataclass containing measured and calculated oscillator strengths. """
+
+    level: int
+    line_name: str
+    meas: float | str
+    delta: float | str
+    ed: float
+    md: float
+    diff: float | str
+    name: str
+
+
+class MeasStrengths(MeasBase):
+    """ This class provides a level-based comparison of measured and calculated oscillator strengths. """
+
+    val_fmt = {
+        "level": "d", "line_name": "s",
+        "meas": ".1f", "delta": ".1f", "ed": ".1f", "md": ".1f", "diff": ".1f",
+        "name": "s",
+    }
+    row_fmt = "{}  {} | {}  {}  {}  {}  {} | {}"
+
+    def __init__(self, lines, names, strengths):
+        assert isinstance(lines, list)
+        assert isinstance(names, list)
+        assert isinstance(strengths, Transition)
+        assert len(strengths.ed) == len(strengths.md) == len(names)
+
+        self.names = names
+        self.strengths = strengths
+
+        # Prepare line measurement objects
+        self.num_states = len(names)
+        lines = [line[:2] + line[4:6] for line in lines]
+        self.lines = MeasLines(lines, self.num_states)
+
+        # Prepare measured and calculated data for all energy levels
+        self.levels = []
+        for i in range(self.num_states):
+            meas = self.lines[i]
+            ed = self.strengths.ed[i]
+            md = self.strengths.md[i]
+            if isinstance(meas.level, int):
+                diff = meas.value - (self.strengths.ed[i] + self.strengths.md[i])
+            elif isinstance(meas.level, tuple):
+                diff = meas.value - sum(self.strengths.ed[j] + self.strengths.md[j] for j in meas.level)
+            else:
+                diff = meas.value
+            name = self.names[i]
+            self.levels.append(MeasStrength(i, meas.name, meas.value, meas.delta, ed, md, diff, name))
+
+        # Mean error margin and weighted average deviation of measured and calculated values
+        self.mean, self.sigma = self.get_sigma("delta", "diff")
+
+    def table(self):
+        """ Generate line strings of result table. """
+
+        # Header elements
+        head = ["", "", "fmeas", "", "fed", "fmd", "", ""]
+
+        # Footer_elements
+        sigma = format(self.sigma, self.val_fmt["diff"])
+        mean = format(self.mean, self.val_fmt["delta"])
+        foot = ["", "", "", mean, "", "", sigma, ""]
+
+        # Generate table lines
+        yield from self.iter_table(head, foot)
+
+
+@dataclass
+class MeasLevel:
+    """ Dataclass containing measured and calculated wavenumbers and oscillator strengths. """
+
+    level: int
+    line_name: str
+    k_meas: float | str
+    k_delta: float | str
+    k_calc: float
+    k_diff: float | str
+    f_meas: float | str
+    f_delta: float | str
+    f_ed: float
+    f_md: float
+    f_diff: float | str
+    name: str
+
+
+class MeasLevels(MeasBase):
+    """ This class provides a level-based comparison of measured and calculated wavenumbers and oscillator
+    strengths. """
+
+    val_fmt = {
+        "level": "d", "line_name": "s",
+        "k_meas": ".0f", "k_delta": ".0f", "k_calc": ".0f", "k_diff": ".1f",
+        "f_meas": ".1f", "f_delta": ".1f", "f_ed": ".1f", "f_md": ".1f", "f_diff": ".1f",
+        "name": "s",
+    }
+    row_fmt = "{}  {} | {}  {}  {}  {} | {}  {}  {}  {}  {} | {}"
+
+    def __init__(self, lines, names, energies, mult, strengths):
+        self.num_states = len(names)
+
+        # Comparison objects for wavenumbers and oscillator strengths
+        self.energies = MeasEnergies(lines, names, energies, mult)
+        self.strengths = MeasStrengths(lines, names, strengths)
+
+        # Prepare measured and calculated data for all energy levels
+        self.levels = []
+        for i in range(self.num_states):
+            k_meas = self.energies[i]
+            f_meas = self.strengths[i]
+            k_data = (k_meas.meas, k_meas.delta, k_meas.calc, k_meas.diff)
+            f_data = (f_meas.meas, f_meas.delta, f_meas.ed, f_meas.md, f_meas.diff)
+            self.levels.append(MeasLevel(i, k_meas.line_name, *k_data, *f_data, f_meas.name))
+
+        # Mean error margin and weighted average deviation of measured and calculated values
+        self.k_mean, self.k_sigma = self.get_sigma("k_delta", "k_diff")
+        self.f_mean, self.f_sigma = self.get_sigma("f_delta", "f_diff")
+
+    def table(self):
+        """ Generate line strings of result table. """
+
+        # Header elements
+        head = ["", "", "kmeas", "", "kcalc", "", "fmeas", "", "fed", "fmd", "", ""]
+
+        # Footer elements
+        k_sigma = format(self.k_sigma, self.val_fmt["k_diff"])
+        k_mean = format(self.k_mean, self.val_fmt["k_delta"])
+        f_sigma = format(self.f_sigma, self.val_fmt["f_diff"])
+        f_mean = format(self.f_mean, self.val_fmt["f_delta"])
+        foot = ["", "", "", k_mean, "", k_sigma, "", f_mean, "", "", f_sigma, ""]
+
+        # Generate table lines
+        yield from self.iter_table(head, foot)
+
+
+##########################################################################
+# Energy level fit
+##########################################################################
 
 class LevelFit:
     """ This class is used to perform an energy level fit using the Levenberg-Marquardt algorithm. """
@@ -147,6 +481,10 @@ class LevelFit:
         self.update_params(opt_names, res.x.tolist())
 
 
+##########################################################################
+# Judd-Ofelt fit
+##########################################################################
+
 def judd_ofelt_fit(ion, lines):
     """ Perform a Judd-Ofelt fit using a linear least squares operation. """
 
@@ -182,143 +520,9 @@ def judd_ofelt_fit(ion, lines):
     return judd_ofelt, sigma
 
 
-def str_compare(lines, states, f_calc=None):
-    """ Generate text table comparing measured and calculated absorption lines. """
-
-    assert isinstance(lines, list)
-    size = set(len(line) for line in lines)
-    assert len(size) == 1
-    size = size.pop()
-    assert size in (4, 6)
-    has_strengths = True if size == 6 else False
-    if has_strengths:
-        assert f_calc is not None
-
-    meas = len(states) * [{"type": "empty"}]
-    for line in lines:
-        idx, name, k_meas, dk_meas = line[:4]
-        if isinstance(idx, (list, tuple)):
-            meas[idx[0]] = {"type": "overlapped", "range": idx, "k": k_meas, "dk": dk_meas, "name": name[0]}
-            if has_strengths:
-                meas[idx[0]]["f"] = line[4]
-                meas[idx[0]]["df"] = line[5]
-            for i, n in zip(idx[1:], name[1:]):
-                meas[i] = {"type": "continue", "name": n}
-        else:
-            meas[idx] = {"type": "normal", "k": k_meas, "dk": dk_meas, "name": name}
-            if has_strengths:
-                meas[idx]["f"] = line[4]
-                meas[idx]["df"] = line[5]
-
-    result = []
-    f_meas = df_meas = fed_calc = fmd_calc = df_calc = None
-    k_sigma = inv_dk = 0.0
-    f_sigma = inv_df = 0.0
-    for i, state in enumerate(states):
-        name_calc = state.short()
-        level_type = meas[i]["type"]
-        if level_type == "normal":
-            name_meas = meas[i]["name"]
-            k_meas = f'{meas[i]["k"]:.0f}'
-            dk_meas = f'({meas[i]["dk"]:.0f})'
-            k_calc = f'{state.energy:.0f}'
-            dk_calc = f'{state.energy - meas[i]["k"]:.1f}'
-            k_sigma += ((state.energy - meas[i]["k"]) / meas[i]["dk"]) ** 2
-            inv_dk += 1 / meas[i]["dk"] ** 2
-            if has_strengths:
-                f_meas = f'{meas[i]["f"]:.1f}'
-                df_meas = f'({meas[i]["df"]:.1f})'
-                fed_calc = f'{f_calc.ed[i]:.1f}'
-                fmd_calc = f'{f_calc.md[i]:.1f}'
-                df_calc = f'{f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]:.1f}'
-                f_sigma += ((f_calc.ed[i] + f_calc.md[i] - meas[i]["f"]) / meas[i]["df"]) ** 2
-                inv_df += 1 / meas[i]["df"] ** 2
-        elif level_type == "overlapped":
-            name_meas = meas[i]["name"]
-            k_meas = f'{meas[i]["k"]:.0f}'
-            dk_meas = f'({meas[i]["dk"]:.0f})'
-            k = np.array([states[i].energy for i in meas[i]["range"]])
-            m = np.array([states[i].mult for i in meas[i]["range"]])
-            k = np.sum(k * m) / np.sum(m)
-            k_calc = f'{state.energy:.0f}'
-            dk_calc = f'{k - meas[i]["k"]:.1f}'
-            k_sigma += ((k - meas[i]["k"]) / meas[i]["dk"]) ** 2
-            inv_dk += 1 / meas[i]["dk"] ** 2
-            if has_strengths:
-                f_meas = f'{meas[i]["f"]:.1f}'
-                df_meas = f'({meas[i]["df"]:.1f})'
-                f = sum([f_calc.ed[i] + f_calc.md[i] for i in meas[i]["range"]])
-                fed_calc = f'{f_calc.ed[i]:.1f}'
-                fmd_calc = f'{f_calc.md[i]:.1f}'
-                df_calc = f'{f - meas[i]["f"]:.1f}'
-                f_sigma += ((f - meas[i]["f"]) / meas[i]["df"]) ** 2
-                inv_df += 1 / meas[i]["df"] ** 2
-        elif level_type == "continue":
-            name_meas = meas[i]["name"]
-            k_meas = "..."
-            dk_meas = ""
-            k_calc = f'{state.energy:.0f}'
-            dk_calc = "..."
-            if has_strengths:
-                f_meas = "..."
-                df_meas = ""
-                fed_calc = f'{f_calc.ed[i]:.1f}'
-                fmd_calc = f'{f_calc.md[i]:.1f}'
-                df_calc = "..."
-        else:
-            name_meas = ""
-            k_meas = ""
-            dk_meas = ""
-            k_calc = f'{state.energy:.0f}'
-            dk_calc = ""
-            if has_strengths:
-                f_meas = ""
-                df_meas = ""
-                fed_calc = f'{f_calc.ed[i]:.1f}'
-                fmd_calc = f'{f_calc.md[i]:.1f}'
-                df_calc = ""
-        line = [str(i), name_meas, k_meas, dk_meas, k_calc, dk_calc, name_calc]
-        if has_strengths:
-            line = line[:-1] + [f_meas, df_meas, fed_calc, fmd_calc, df_calc] + line[-1:]
-        result.append(line)
-
-    dk_mean = f"{np.mean([line[3] for line in lines]):.1f}"
-    k_sigma = f"{np.sqrt(k_sigma / inv_dk):.1f}"
-    df_mean = 0.0
-    if has_strengths:
-        df_mean = f"{np.mean([line[5] for line in lines]):.1f}"
-        f_sigma = f"{np.sqrt(f_sigma / inv_df):.1f}"
-
-    width = [max(map(len, values)) for values in zip(*result)]
-    formats = [f"{{:>{width[i]}s}}" for i in range(len(width))]
-    fmt = "{}  {} | {}  {}  {}  {} | {}"
-    if has_strengths:
-        fmt = "{}  {} | {}  {}  {}  {} | {}  {}  {}  {}  {} | {}"
-    values = [fmt.format(value) for fmt, value in zip(formats, len(formats) * [""])]
-    line = fmt.format(*values)
-    size = len(line)
-
-    values = ["", "", "kmeas", "", "kcalc", "", ""]
-    if has_strengths:
-        values = values[:-1] + ["fmeas", "", "fed", "fmd", ""] + values[-1:]
-    values = [fmt.format(value) for fmt, value in zip(formats, values)]
-    line = fmt.format(*values)
-    yield line
-
-    yield size * "-"
-    for values in result:
-        values = [fmt.format(value) for fmt, value in zip(formats, values)]
-        line = fmt.format(*values)
-        yield line
-
-    yield size * "-"
-    values = ["", "", "", dk_mean, "", k_sigma, ""]
-    if has_strengths:
-        values = values[:-1] + ["", df_mean, "", "", f_sigma] + values[-1:]
-    values = [fmt.format(value) for fmt, value in zip(formats, values)]
-    line = fmt.format(*values)
-    yield line
-
+##########################################################################
+# Class Fits
+##########################################################################
 
 class Fits:
     """ This class is used to perform energy level and Judd-Ofelt fits to determine optimised radial integrals and
@@ -427,19 +631,27 @@ class Fits:
         # Return optimised Levels object
         return self.ion
 
-    def str_compare(self):
+    def table(self):
         """ Generate text table comparing measured and calculated absorption lines. """
 
         assert self.lines is not None, "Run an energy level fit first!"
 
+        # Scale oscillator strengths
         lines = [line.copy() for line in self.lines]
         if self.has_strengths:
-            f = self.ion.oscillator_strengths()
-            f.ed = f.ed[:, 0] * 1e8
-            f.md = f.md[:, 0] * 1e8
+            strengths = self.ion.oscillator_strengths()
+            strengths.ed = strengths.ed[:, 0] * 1e8
+            strengths.md = strengths.md[:, 0] * 1e8
             for i in range(len(lines)):
                 lines[i][4] *= 1e8
                 lines[i][5] *= 1e8
         else:
-            f = None
-        yield from str_compare(lines, self.ion.states, f)
+            strengths = None
+
+        # Generate line strings of table
+        names = [state.short() for state in self.ion.states]
+        energies = list(self.ion.states.energies)
+        mult = list(self.ion.states.mult)
+        meas = MeasLevels(lines, names, energies, mult, strengths)
+        for line in meas.table():
+            yield line

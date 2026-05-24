@@ -119,11 +119,10 @@ for stage in stages:
 
 ### Visualisation
 
-For a quick visualisation of the fitting results, the method `Fits.str_compare()`
-generates a text table line-by-line:
+For a quick visualisation of the fitting results, the method `Fits.table()` generates the lines of a text table:
 
 ```
-for line in opt.str_compare():
+for line in opt.table():
     print(line)
 ```
 
@@ -131,7 +130,7 @@ and the result looks like this:
 
 ```
          | kmeas        kcalc       | fmeas            fed   fmd         |     
--------------------------------------------------------------------------------
+---------+--------------------------+------------------------------------+-----
  0       |                330       |                  0.0   0.0         | 3H_4
  1  3H_5 |  2365   (4)   2364  -0.9 | 196.2   (2.8)  173.9  14.2    -8.2 | 3H_5
  2  3H_6 |  4485  (18)   4496  11.1 |  77.4   (5.1)   75.5   0.0    -1.9 | 3H_6
@@ -145,7 +144,7 @@ and the result looks like this:
 10  1I_6 |   ...        21507   ... |   ...          141.5   0.0     ... | 1I_6
 11  3P_2 | 22645  (10)  22646   1.2 | 926.8  (28.7)  408.5   0.0  -518.3 | 3P_2
 12       |              46454       |                 24.0   0.0         | 1S_0
--------------------------------------------------------------------------------
+---------+--------------------------+------------------------------------+-----
          |        11.3          2.7 |          13.1                 11.7 |     
 ```
 

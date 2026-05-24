@@ -63,5 +63,5 @@ if __name__ == '__main__':
 
     opt = Fits(config, coupling, radial, material)
     opt.run(lines, stages)
-    for line in opt.str_compare():
+    for line in opt.table():
         logger.info(line)
