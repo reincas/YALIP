@@ -157,13 +157,13 @@ The table consists of 12 columns:
    are marked by ellipses (`...`).
 4. Error margin of the measured energy in cm<sup>-1</sup>
 5. Calculated level energy
-6. Difference between measured and calculated energy
+6. Difference between calculated and measured energy
 7. Measured oscillator strength in $10^{-8}$. Overlapping levels
    are marked by ellipses (`...`).
 8. Error margin of the measured oscillator strength in $10^{-8}$
 9. Calculated electric dipole oscillator strength in $10^{-8}$
 10. Calculated magnetic dipole oscillator strength in $10^{-8}$
-11. Difference between measured and calculated oscillator strength
+11. Difference between calculated and measured oscillator strength
 12. Short level name
 
 Columns 7-11 are only generated if the `Fits` object was initialised with a 
