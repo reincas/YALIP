@@ -137,3 +137,22 @@ MATERIAL = {
     # Silica glass from [6]
     "SiO2": Sellmeier(0.6961663, 0.4079426, 0.8974794, 0.0684043, 0.1162414, 9.896161)
 }
+
+
+def config2ion(config):
+    """ Convert configuration string into ion string. """
+
+    assert isinstance(config, str)
+    assert config[:1].lower() == "f"
+    num = int(config[1:])
+    assert num > 0 and num < len(LANTHANIDES)
+    return f"{LANTHANIDES[num]}3+"
+
+
+def ion2config(ion):
+    """ Convert ion string into configuration string. """
+
+    assert isinstance(ion, str)
+    assert ion[2:] == "3+"
+    num = LANTHANIDES.index(ion[:2])
+    return f"f{num}"
