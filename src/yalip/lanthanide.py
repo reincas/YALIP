@@ -39,6 +39,10 @@ LANTHANIDES = ["La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho",
 #        Chem. Phys. 525 (2019), 110416
 #        https://doi.org/10.1016/j.chemphys.2019.110416
 #
+#   [y]  I. H. Malitson
+#        "Interspecimen comparison of the refractive index of fused silica"
+#        J. Opt. Soc. Am. 55, 1205-1208 (1965)
+#
 #   [RC] Reinhard Caspary
 #        "Applied Rare-Earth Spectroscopy for Fiber Laser Optimization"
 #        Dissertation, Shaker, Aachen, 2002
@@ -127,7 +131,10 @@ JUDD_OFELT = {
 
 # Spectral refractive index coefficients
 MATERIAL = {
+    # ZBLAN doped with 2.5 % PbF_2 [RC]
     "Pb:ZBLAN": Cauchy(1.35123e-5, 2.94780e-3, 1.49985, -1.30933e-3, -3.23335e-6),
+    # ZBLAN [6]
     "ZBLAN": Cauchy(1.35123e-5, 2.94780e-3, 1.48965, -1.30933e-3, -3.23335e-6),
+    # Silica glass [y]
     "SiO2": Sellmeier(0.6961663, 0.4079426, 0.8974794, 0.0684043, 0.1162414, 9.896161)
 }
