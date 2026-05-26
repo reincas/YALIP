@@ -42,6 +42,7 @@
 
 
 import logging
+import math
 
 from .spectrum import Cauchy, Sellmeier
 
@@ -138,7 +139,11 @@ MATERIAL = {
     # ZBLAN from [5]
     "ZBLAN": Cauchy(1.35123e-5, 2.94780e-3, 1.48965, -1.30933e-3, -3.23335e-6),
     # Silica glass from [6]
-    "SiO2": Sellmeier(0.6961663, 0.4079426, 0.8974794, 0.0684043, 0.1162414, 9.896161)
+    "SiO2": Sellmeier(0.6961663, 0.4079426, 0.8974794, 0.0684043, 0.1162414, 9.896161),
+    # LaF3 ordinary ray [Laiho1983]
+    "LaF3/o": Sellmeier(1 / 0.6505, 0.0, 0.0, math.sqrt(5.044e-3 / 0.6505), 0.0, 0.0),
+    # LaF3 extraordinary ray [Laiho1983]
+    "LaF3/e": Sellmeier(1 / 0.6600, 0.0, 0.0, math.sqrt(5.093e-3 / 0.6600), 0.0, 0.0),
 }
 
 
