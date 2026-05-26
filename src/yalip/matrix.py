@@ -44,7 +44,7 @@ def normalise_radial(radial):
 
     # No conversion for standard parameters
     for key in list(keys):
-        if key == "base" or key[:2] in ("JO", "H1", "H2", "H3", "H4", "H5", "H6") or key[:3] == "Hcf":
+        if key not in ["F_0", "F_2", "F_4", "F_6", "P_2", "P_4", "P_6", "E^0", "E^1", "E^2", "E^3"]:
             new_radial[key] = radial[key]
             keys.remove(key)
 
