@@ -18,6 +18,7 @@ from scipy.optimize import least_squares
 
 from . import Coupling
 from .spectrum import jo_factors, Transition
+from .matrix import normalize_radial
 from .levels import Levels
 
 logger = logging.getLogger("yalip.fit")
@@ -540,7 +541,7 @@ class Fits:
         self.coupling = coupling
 
         # Radial integrals
-        self.radial = radial.copy()
+        self.radial = normalize_radial(radial)
 
         # Intermediate coupling object
         self.ion = Levels(config, coupling, radial, None, material)

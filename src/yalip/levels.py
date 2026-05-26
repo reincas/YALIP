@@ -13,7 +13,7 @@
 import logging
 import numpy as np
 
-from .matrix import get_energies
+from .matrix import get_energies, normalize_radial
 from .spectrum import line_strengths, Dipole, CONST_gs, oscillator_strengths, radiative_rates
 from .states import Coupling, State, StateList, get_states
 
@@ -135,7 +135,7 @@ class Levels:
 
         # Radial integrals
         assert "base" in radial
-        self.radial_integrals = radial.copy()
+        self.radial_integrals = normalize_radial(radial)
 
         # Judd-Ofelt parameters
         self.judd_ofelt = jo
