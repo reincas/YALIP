@@ -540,13 +540,14 @@ class Fits:
         self.coupling = coupling
 
         # Radial integrals
-        self.radial = radial
+        self.radial = radial.copy()
 
         # Intermediate coupling object
         self.ion = Levels(config, coupling, radial, None, material)
 
         # Material object providing spectral refractive indices
         self.material = material
+        self.has_strengths = material is not None
 
         # State multiplicities
         self.mult = np.array(self.base_states.mult)
@@ -556,7 +557,6 @@ class Fits:
 
         # No fit yet
         self.levels = None
-        self.has_strengths = False
         self.sigma_k = None
         self.sigma_f = None
 
@@ -586,9 +586,8 @@ class Fits:
         size = set(len(line) for line in lines)
         assert len(size) == 1
         size = size.pop()
-        assert size in (4, 6)
+        assert size == 6
         self.lines = lines
-        self.has_strengths = True if size == 6 else False
 
         if stages is None:
             self.ion = Levels(self.config, self.coupling, self.radial, None, self.material)
