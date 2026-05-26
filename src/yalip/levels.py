@@ -135,7 +135,7 @@ class Levels:
 
         # Radial integrals
         assert "base" in radial
-        self.radial_integrals = radial
+        self.radial_integrals = radial.copy()
 
         # Judd-Ofelt parameters
         self.judd_ofelt = jo
@@ -191,6 +191,13 @@ class Levels:
         """ Return the state object with the given index. """
 
         return self.states.states[item]
+
+    def set_base(self, base):
+        """ Set the base state energy in cm^-1. """
+        self.states.energies += base - self.states.energies[0]
+        for i, state in enumerate(self.states.states):
+            state.energy = self.states.energies[i]
+        self.radial_integrals["base"] = base
 
     def matrix(self, name):
         """ Return the matrix of the tensor operator or the weighted sum of tensor operators. """
