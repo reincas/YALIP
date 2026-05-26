@@ -194,7 +194,7 @@ class Levels:
 
     def set_base(self, base):
         """ Set the base state energy in cm^-1. """
-        
+
         self.states.energies += base - self.states.energies[0]
         for i, state in enumerate(self.states.states):
             state.energy = self.states.energies[i]
