@@ -35,7 +35,7 @@ ALT_NAMES = {
 }
 
 
-def normalise_radial(radial):
+def normalize_radial(radial):
     """ Convert an alternative parameter set into the standard set of radial integrals "H1"-"H6". """
 
     # Get keys and initialize the normalised set.
@@ -121,7 +121,7 @@ def get_energies(config, radial, state_space, base_transform):
         assert state_space == "sljm", "Crystal field parameters require SLJM coupling!"
 
     # Build linear combination specified in the radial dictionary
-    radial = normalise_radial(radial)
+    radial = normalize_radial(radial)
     names = {k: v for k, v in radial.items() if k != "base" and not k.startswith("JO/")}
 
     # Build the perturbation Hamiltonian
