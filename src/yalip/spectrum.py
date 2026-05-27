@@ -67,17 +67,19 @@ class Cauchy:
     def refractive_index(self, k):
         """ Return the refractive index for a single wavenumber or a numpy array of wavenumbers in cm^-1. """
 
-        # Convert cm^-1 to microns
-        with np.errstate(divide='ignore'):
-            lam = 10000.0 / np.asanyarray(k, dtype=float)
-        lam[np.isinf(lam)] = 1e15
+        # Ignore warnings if k = 0
+        with np.errstate(divide='ignore', invalid='ignore'):
 
-        # Calculate refractive index based on Schott Glass Dispersion formula
-        n = (self.A * lam ** -4 +
-             self.B * lam ** -2 +
-             self.C +
-             self.D * lam ** 2 +
-             self.E * lam ** 4)
+            # Convert cm^-1 to microns
+            lam = 10000.0 / np.asanyarray(k, dtype=float)
+            lam[np.isinf(lam)] = 1e15
+
+            # Calculate refractive index based on Schott Glass Dispersion formula
+            n = (self.A * lam ** -4 +
+                 self.B * lam ** -2 +
+                 self.C +
+                 self.D * lam ** 2 +
+                 self.E * lam ** 4)
 
         # Clip unrealistic values
         n = np.clip(n, 1.0, 3.0)
@@ -104,18 +106,21 @@ class Sellmeier:
         # Handle scalar vs array input
         is_scalar = np.isscalar(k)
 
-        # Convert cm^-1 to microns (L)
-        lam2 = (10000.0 / np.asanyarray(k, dtype=float)) ** 2
+        # Ignore warnings if k = 0
+        with np.errstate(divide='ignore', invalid='ignore'):
 
-        # Calculate refractive index based on the Sellmeier formula
-        n2 = 1.0
-        for i in range(len(self.B)):
-            if self.B[i] != 0:
-                n2 += (self.B[i] * lam2) / (lam2 - self.C2[i])
-        n = np.sqrt(n2)
+            # Convert cm^-1 to microns (L)
+            lam2 = (10000.0 / np.asanyarray(k, dtype=float)) ** 2
+            lam2[np.isinf(lam2)] = 1e15
 
-        # Clip unrealistic values
-        n = np.clip(n, 1.0, 3.0)
+            # Calculate refractive index based on the Sellmeier formula
+            # Clip unrealistic values
+            n2 = 1.0
+            for i in range(len(self.B)):
+                if self.B[i] != 0:
+                    n2 += (self.B[i] * lam2) / (lam2 - self.C2[i])
+            n2 = np.clip(n2, 1.0, 9.0)
+            n = np.sqrt(n2)
 
         # Return refractive index
         if np.isscalar(k):
