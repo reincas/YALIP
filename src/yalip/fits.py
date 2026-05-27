@@ -544,7 +544,7 @@ class Fits:
         self.radial = normalize_radial(radial)
 
         # Intermediate coupling object
-        self.ion = Levels(config, coupling, radial, None, material)
+        self.ion = Levels(config, coupling, self.radial, None, material)
 
         # Material object providing spectral refractive indices
         self.material = material
@@ -554,7 +554,7 @@ class Fits:
         self.mult = np.array(self.base_states.mult)
 
         # Perturbation energy matrices
-        self.matrices = {name: self.base_states.matrix(name) for name in radial.keys() if name != "base"}
+        self.matrices = {name: self.base_states.matrix(name) for name in self.radial.keys() if name != "base"}
 
         # No fit yet
         self.levels = None
@@ -651,6 +651,15 @@ class Fits:
         names = [state.short() for state in self.ion.states]
         energies = list(self.ion.states.energies)
         mult = list(self.ion.states.mult)
-        meas = MeasLevels(lines, names, energies, mult, strengths)
+
+        # Select table type
+        if len(set(line[2] for line in lines)) == 1:
+            meas = MeasStrengths(lines, names, strengths)
+        elif self.has_strengths:
+            meas = MeasLevels(lines, names, energies, mult, strengths)
+        else:
+            meas = MeasEnergies(lines, names, energies, mult)
+
+        # Generate table rows
         for line in meas.table():
             yield line
