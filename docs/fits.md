@@ -162,8 +162,8 @@ to the offset:
 
 $$\frac{\partial}{\partial k_\mathrm{off}} \sum_i r_i^2 = 0$$
 
-Handling the offset parameter implicitly in this manner performs well because the Jacobian matrix is calculated
-numerically.
+Handling the offset parameter implicitly in this manner performs well because the internal Jacobian matrix is
+calculated numerically by the optimiser.
 Note, however, that an analytical Jacobian would require this parameter to be taken into account explicitly.
 
 Finally, rather than returning the raw parameter $k_\mathrm{off}$, the fitting function automatically adjusts the
