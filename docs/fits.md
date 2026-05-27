@@ -144,30 +144,30 @@ YALIP utilizes the Levenberg-Marquardt optimiser as a weighted nonlinear least-s
 optimum values for the radial integrals.
 The error margin of a measured absorption line defines the weight factor for that line:
 
-$$w_i = 1 / \Delta k^\mathrm{meas}_i$$
+$$w_i = \frac{1}{\Delta k^\mathrm{meas}_i}$$
 
 Because the calculated energies $k^\mathrm{calc}_i$ lack a fixed reference point, an offset adjustment is required.
 However, instead of treating `base` (the ground level energy) as an explicit fit parameter, YALIP exploits the fact
 that the optimum shift parameter can always be determined analytically.
 The exact offset parameter is given by:
 
-$$ k^\mathrm{off} = \frac{\sum_i w_i^2 (k^\mathrm{meas}_i - k^\mathrm{calc}_i)}{\sum_i w_i^2}$$ 
+$$ k_\mathrm{off} = \frac{\sum_i w_i^2 (k^\mathrm{meas}_i - k^\mathrm{calc}_i)}{\sum_i w_i^2}$$ 
 
 The residuals for the least-squares fit are then defined as:
 
-$$r_i = w_i (k^\mathrm{calc}_i - k^\mathrm{meas}_i + k^\mathrm{off})$$
+$$r_i = w_i (k^\mathrm{calc}_i - k^\mathrm{meas}_i + k_\mathrm{off})$$
 
-By definition, this choice of $k^\mathrm{off}$ ensures that the sum of the squared residuals is minimized with respect
+By definition, this choice of $k_\mathrm{off}$ ensures that the sum of the squared residuals is minimized with respect
 to the offset:
 
-$$\frac{\partial}{\partial k^\mathrm{off}} \sum_i r_i^2 = 0$$
+$$\frac{\partial}{\partial k_\mathrm{off}} \sum_i r_i^2 = 0$$
 
 Handling the offset parameter implicitly in this manner performs well because the Jacobian matrix is calculated
 numerically.
 Note, however, that an analytical Jacobian would require this parameter to be taken into account explicitly.
 
-Finally, rather than returning the raw parameter $k^\mathrm{off}$, the fitting function automatically adjusts the
-`base` parameter so that $k^\mathrm{off}$ becomes zero upon completion.
+Finally, rather than returning the raw parameter $k_\mathrm{off}$, the fitting function automatically adjusts the
+`base` parameter so that $k_\mathrm{off}$ becomes zero upon completion.
 
 ### Visualisation
 
