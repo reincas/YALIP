@@ -430,16 +430,22 @@ class LevelFit:
                 m = mult[idx]
                 k_calc = energies[idx]
             else:
+                ##################################################################################################
+                # WARNING: Using the barycenter of overlapping lines is a questionable choice. The correct weight
+                # factor is the absorption strength of each level, not its multiplicity. That requires a JO-fit.
+                # !!! CHANGE THAT !!!
                 idx = np.array(idx)
                 m = np.sum(mult[idx])
                 k_calc = np.sum(energies[idx] * mult[idx]) / m
+                ##################################################################################################
             results.append((k_meas, k_calc, dk_meas, m))
         k_meas, k_calc, dk_meas, m = np.array(results).T
 
-        # Equalise barycenter of measured and calculated energy levels
-        k0 = np.sum((k_meas - k_calc) * m) / sum(m)
-        k_calc += k0
-        self.params["base"] = float(energies[0] + k0)
+        # Adjust spectral offset of calculated levels
+        w = 1 / dk_meas ** 2
+        dk = np.sum((k_meas - k_calc) * w) / sum(w)
+        k_calc += dk
+        self.params["base"] = float(energies[0] + dk)
 
         # Return results
         return k_meas, k_calc, dk_meas, m
