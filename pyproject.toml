@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "YALIP"
-version = "0.9.2"
+version = "0.9.3"
 authors = [
     { name = "Reinhard Caspary", email = "reinhard.caspary@phoenixd.uni-hannover.de"},
 ]

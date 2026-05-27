@@ -102,7 +102,7 @@ def init_logger(file_name=None, level=logging.INFO):
 if __name__ == '__main__':
     init_logger(level=logging.DEBUG)
 
-    name = "Er3+"
+    name = "Pr3+"
 
     config = ion2config(name)
     coupling = Coupling.SLJ

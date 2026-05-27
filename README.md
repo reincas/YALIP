@@ -1,4 +1,4 @@
-# YALIP 0.9.2 (Yet Another Lanthanide Ion Package)
+# YALIP 0.9.3 (Yet Another Lanthanide Ion Package)
 
 This is a Python 3 package to calculate the energy levels of multi-electron
 systems populating the 4f configuration, which means the lanthanide or
