@@ -59,9 +59,11 @@ They are not used by the algorithm yet, but may be verified to disentangle cross
 levels in the future.
 For a level index `i` the level name should match `str(ion[i])`.
 
-Note that realistic error margins are quite important, because the algorithm uses
+Note, that realistic error margins are quite important, because the algorithm uses
 them as weight factors for the energy level fit as well as the Judd-Ofelt fit.
-However, you may bypass this feature by setting all error margins to 1.
+However, you may bypass this feature by setting the error margins of the energies
+to 1 (absolute comparison) and the error margins of the oscillator strengths 
+identical to the measurement values (relative comparison).
 
 ### Optimisation
 
@@ -106,8 +108,9 @@ level calculation, but not optimize it.
 `"H5fix"` and `"H6fix"` are often used abbreviations for the fixed relationships
 `{"H5/0": 1.0, "H5/2": 0.56, "H5/4": 0.38}` and 
 `{"H6/2": 1.0, "H6/4": 0.75, "H6/6": 0.50}`, respectively.
-If the `Fits` object was initialised with a materials object, the last stage of
-the energy-level fit will be followed by a Judd-Ofelt fit.
+If the `Fits` object was initialised with a materials object delivering spectral
+refractive indices, the last stage of the energy-level fit will be followed by a
+Judd-Ofelt fit.
 
 In order to monitor the fitting progress in more detail, you can also call the
 method run for each individual fitting stage separately: 
@@ -116,6 +119,55 @@ method run for each individual fitting stage separately:
 for stage in stages:
     opt.run(lines, stage)
 ```
+
+### Fitting Algorithm
+
+There is no universal solution to nonlinear fitting problems.
+YALIP currently implements a basic, generic approach, and users should be prepared to make specific modifications
+depending on their requirements.
+
+The energy level fit in YALIP uses the energies $k^\mathrm{meas}_i$ of a set of measured absorption lines and their
+associated error margins $\Delta k^\mathrm{meas}_i$ as references.
+The initial set of radial integrals is used to construct the total perturbation Hamiltonian as a linear combination of
+all individual matrices.
+The eigenvalues of this total Hamiltonian yield the calculated energies of all energy levels.
+Mapping these energy levels to their corresponding measured absorption lines results in a list of calculated energies
+$k^\mathrm{calc}_i$, which the algorithm attempts to match to the measured energies as closely as possible.
+
+Some absorption lines represent multiple overlapping levels.
+In these cases, the calculated energy $k^\mathrm{calc}_i$ must be a weighted average of the constituent levels.
+While the ideal weights would be the calculated absorption strengths of the respective levels, computing them
+introduces significant computational overhead and is not yet implemented.
+Consequently, YALIP takes the next best approach by using the level multiplicities as weight factors.
+
+YALIP utilizes the Levenberg-Marquardt optimiser as a weighted nonlinear least-squares fitting algorithm to find the
+optimum values for the radial integrals.
+The error margin of a measured absorption line defines the weight factor for that line:
+
+$$w_i = 1 / \Delta k^\mathrm{meas}_i$$
+
+Because the calculated energies $k^\mathrm{calc}_i$ lack a fixed reference point, an offset adjustment is required.
+However, instead of treating `base` (the ground level energy) as an explicit fit parameter, YALIP exploits the fact
+that the optimum shift parameter can always be determined analytically.
+The exact offset parameter is given by:
+
+$$ k^\mathrm{off} = \frac{\sum_i w_i^2 (k^\mathrm{meas}_i - k^\mathrm{calc}_i)}{\sum_i w_i^2}$$ 
+
+The residuals for the least-squares fit are then defined as:
+
+$$r_i = w_i (k^\mathrm{calc}_i - k^\mathrm{meas}_i + k^\mathrm{off})$$
+
+By definition, this choice of $k^\mathrm{off}$ ensures that the sum of the squared residuals is minimized with respect
+to the offset:
+
+$$\frac{\partial}{\partial k^\mathrm{off}} \sum_i r_i^2 = 0$$
+
+Handling the offset parameter implicitly in this manner performs well because the Jacobian matrix is calculated
+numerically.
+Note, however, that an analytical Jacobian would require this parameter to be taken into account explicitly.
+
+Finally, rather than returning the raw parameter $k^\mathrm{off}$, the fitting function automatically adjusts the
+`base` parameter so that $k^\mathrm{off}$ becomes zero upon completion.
 
 ### Visualisation
 
