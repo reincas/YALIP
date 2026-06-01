@@ -29,6 +29,7 @@ import numpy as np
 from pathlib import Path
 from platformdirs import user_cache_dir
 import requests
+import sympy as sp
 import tempfile
 import zipfile
 
@@ -387,6 +388,69 @@ def read_json(path, item):
     with zipfile.ZipFile(path, "r") as z:
         with z.open(item) as f:
             return json.loads(f.read())
+
+
+##########################################################################
+# Symbolic matrices
+##########################################################################
+
+def decode_symbolic(sign, numerator, denominator):
+    """ Return symbolic expression (-1)^s * sqrt(n/d) for each element of the given lists. """
+
+    assert len(sign) == len(numerator) == len(denominator)
+    values = [sp.sqrt(sp.S(n) / d) for n, d in zip(numerator, denominator)]
+    values = [v if s == 0 else -v for s, v in zip(sign, values)]
+    return values
+
+
+def read_symbolic(path, item):
+    """ Return the given AMELI matrix as sympy.SparseMatrix. """
+
+    with zipfile.ZipFile(path, "r") as z:
+        with z.open(item) as f:
+            data = io.BytesIO(f.read())
+
+    root = h5py.File(data, "r")
+
+    sign = decode_uint_array(root, "sign")
+    numerator = decode_uint_array(root, "numerator")
+    denominator = decode_uint_array(root, "denominator")
+    values = decode_symbolic(sign, numerator, denominator)
+
+    is_symmetric = root.attrs["isSymmetric"]
+    num_states = root.attrs["numStates"]
+    matrix = sp.SparseMatrix(num_states, num_states, {})
+    for row, col, index in zip(root["rows"], root["columns"], root["elements"]):
+        value = values[index]
+        matrix[row, col] = value
+        if row != col and is_symmetric:
+            matrix[col, row] = value
+    return matrix
+
+
+def get_symbolic_matrix(name, config, state_space):
+    """ Read and convert AMELI matrix. """
+
+    assert state_space in ("slj_reduced", "slj", "sljm", "product")
+    path = matrix_path(config, state_space, name)
+    return read_symbolic(path, "data/matrix.hdf5")
+
+
+def get_symbolic_transform(config):
+    """ Read basis states from the AMELI container transform.zdc. """
+
+    update(config)
+    path = AMELI_PATH / config / "transform.zdc"
+    meta = read_json(path, "data/transform.json")
+    transform = {
+        "electronPool": meta["row_states"]["electronPool"],
+        "rowStates": read_indices(path, "data/row_states.hdf5"),
+        "tensorChain": meta["col_states"]["tensorChain"],
+        "irreducibleRepresentations": meta["col_states"]["irreducibleRepresentations"],
+        "colStates": read_indices(path, "data/col_states.hdf5"),
+        "transform": read_symbolic(path, "data/matrix.hdf5"),
+    }
+    return transform
 
 
 ##########################################################################
