@@ -134,7 +134,8 @@ class Levels:
         self.coupling = coupling
 
         # Radial integrals
-        assert "base" in radial
+        if not "base" in radial:
+            radial["base"] = 0
         self.radial_integrals = normalize_radial(radial)
 
         # Judd-Ofelt parameters
