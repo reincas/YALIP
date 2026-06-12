@@ -94,7 +94,7 @@ class Sellmeier:
     """ Function class to determine the spectral refractive index using the Sellmeier formula
     n^2 = 1 + sum_i(B_i * L^2 / (L^2 - C_i^2). """
 
-    def __init__(self, B1, B2, B3, C1, C2, C3):
+    def __init__(self, B1, C1, B2, C2, B3, C3):
         """ Store the Sellmeier coefficients. """
 
         self.B = np.array([B1, B2, B3])
