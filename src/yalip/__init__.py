@@ -19,6 +19,7 @@ class Coupling(Enum):
     SLJ = 2
 
 
+from .ameli import get_symbolic_matrix, get_symbolic_transform
 from .lanthanide import LANTHANIDES, RADIAL, JUDD_OFELT, MATERIAL, config2ion, ion2config
 from .spectrum import CONST_e, CONST_eps0, CONST_me, CONST_h, CONST_c, CONST_gs, Cauchy, Sellmeier
 from .states import States

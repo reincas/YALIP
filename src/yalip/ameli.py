@@ -429,7 +429,7 @@ def read_symbolic(path, item):
 
 
 def get_symbolic_matrix(name, config, state_space):
-    """ Read and convert AMELI matrix. """
+    """ Read AMELI matrix as SymPy.SparseMatrix object. """
 
     assert state_space in ("slj_reduced", "slj", "sljm", "product")
     path = matrix_path(config, state_space, name)
@@ -437,7 +437,8 @@ def get_symbolic_matrix(name, config, state_space):
 
 
 def get_symbolic_transform(config):
-    """ Read basis states from the AMELI container transform.zdc. """
+    """ Read basis states from the AMELI container transform.zdc together with the exact transformation matrix as
+    SymPy.SparseMatrix. """
 
     update(config)
     path = AMELI_PATH / config / "transform.zdc"
