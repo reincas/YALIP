@@ -27,7 +27,9 @@ pip install yalip
 
 ## Usage
 
-The YALIP package is designed for three use cases on different abstraction levels.
+The YALIP package provides raw access to the exact matrices from the AMELI repository as `SymPy.SparseMatrix` objects
+via the functions `get_symbolic_matrix(name, config, state_space)` and `get_symbolic_transform(config)`.
+However, it is mainly designed for three use cases on different abstraction levels.
 
 ### 1. Class `States`
 
