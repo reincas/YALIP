@@ -28,7 +28,7 @@ The following code gives an example measurement representation for a
 Pr<sup>3+</sup> ion:
 
 ```
-meas = [
+lines = [
     [1,      '3H_5',             2365,  4, 196.2e-8,  2.8e-8],
     [2,      '3H_6',             4485, 18,  77.4e-8,  5.1e-8],
     [3,      '3F_2',             5105,  5, 283.3e-8,  6.2e-8],
