@@ -148,4 +148,4 @@ This is free software under the MIT License.
 doctoral dissertation at Technische Universität Braunschweig, published with Shaker, Aachen (2002)
 
 <span id="ref2">[2]</span> Reinhard Caspary: "AMELI: Angular Matrix Elements of Lanthanide Ions", J. Chem. Phys. 165,
-064308 (2026), (DOI 10.1063/5.0335592)[https://doi.org/10.1063/5.0335592]
+064308 (2026), [DOI 10.1063/5.0335592](https://doi.org/10.1063/5.0335592)
