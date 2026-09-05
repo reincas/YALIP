@@ -499,8 +499,12 @@ class LevelFit:
 # Judd-Ofelt fit
 ##########################################################################
 
-def judd_ofelt_fit(ion, lines):
-    """ Perform a Judd-Ofelt fit using a linear least squares operation. """
+def judd_ofelt_fit(ion, lines, extended=False):
+    """ Perform a Judd-Ofelt fit using a linear least squares operation. Returns dictionary of Judd-Ofelt parameters
+    and a dictionary of statistical data for a detailed quality assessment.
+
+    EXTENDED FIT: Fits an overall concentration scale factor for cases in which the ion density or the sample
+    thickness is not known precisely. Note: f_meas and df_meas must be multiplied by this correction factor. """
 
     assert isinstance(ion, Levels)
     assert isinstance(lines, list)
@@ -511,30 +515,77 @@ def judd_ofelt_fit(ion, lines):
     fmd = ion.dipole.LS[:, 0] * factor_md
 
     # Build matrix A of calculated values and result vector b of measured values
-    A = np.zeros((len(lines), 3), dtype=float)
+    n_params = 4 if extended else 3
+    A = np.zeros((len(lines), n_params), dtype=float)
     b = np.zeros(len(lines), dtype=float)
     for i, (idx, f_meas, df_meas) in enumerate(lines):
         if isinstance(idx, int):
             b[i] = (f_meas - fmd[idx]) / df_meas
-            A[i, :] = fed[idx, :] / df_meas
+            A[i, :3] = fed[idx, :] / df_meas
+            if extended:
+                A[i, 3] = fmd[idx] / df_meas
         else:
             if isinstance(idx[0], tuple):
                 idx = np.array(list(zip(*idx))[0])
             else:
                 idx = np.array(idx)
             b[i] = (f_meas - np.sum(fmd[idx])) / df_meas
-            A[i, :] = np.sum(fed[idx, :], axis=0) / df_meas
+            A[i, :3] = np.sum(fed[idx, :], axis=0) / df_meas
+            if extended:
+                A[i, 3] = np.sum(fmd[idx], axis=0) / df_meas
 
     # Perform linear least squares fit resulting in the Judd-Ofelt parameters omega
-    omega, residuals, rank, _ = np.linalg.lstsq(A, b, rcond=None)
+    x, residuals, rank, s = np.linalg.lstsq(A, b, rcond=None)
     chi2 = residuals[0]
-    assert rank == 3
+    assert rank == A.shape[1]
 
-    # Return parameter dictionary and weighted mean deviation of measured and calculated oscillator strengths
+    # Condition number
+    condition = s[0] / s[-1]
+
+    # Leverage
+    U, _, _ = np.linalg.svd(A, full_matrices=False)
+    leverage = np.sum(U ** 2, axis=1)
+
+    # Fitted values and raw residuals
+    b_pred = A @ x
+    e = b - b_pred
+
+    # Mean squared error
+    deg_freedom = A.shape[0] - A.shape[1]
+    mse = np.sum(e ** 2) / deg_freedom
+
+    # Standardized residuals squared
+    std_residuals_sq = (e ** 2) / (mse * (1 - leverage))
+
+    # Cook's distance
+    cooks_distance = (std_residuals_sq / rank) * (leverage / (1 - leverage))
+
+    # Weighted mean deviation of measured and calculated oscillator strengths
     df_meas = np.array([line[2] for line in lines])
     sigma = float(np.sqrt(chi2 / np.sum(1 / df_meas ** 2))) * 1e8
-    judd_ofelt = {f"JO/{2 * i + 2}": value for i, value in enumerate(omega)}
-    return judd_ofelt, sigma
+
+    # Apply scale factor from extended Judd-Ofelt fit
+    if extended:
+        scale = x[3]
+        x[:3] *= scale
+    else:
+        scale = 1.0
+
+    # Return parameter dictionary and statistical data
+    judd_ofelt = {f"JO/{2 * i + 2}": value for i, value in enumerate(x[:3])}
+    stats = {
+        "n_meas": A.shape[0],
+        "n_params": A.shape[1],
+        "deg_freedom": deg_freedom,
+        "mse": mse,
+        "chi2": chi2,
+        "sigma": sigma,
+        "condition": condition,
+        "leverage": leverage,
+        "cooks_distance": cooks_distance,
+        "scale": scale,
+    }
+    return judd_ofelt, stats
 
 
 ##########################################################################
@@ -577,6 +628,7 @@ class Fits:
         self.levels = None
         self.sigma_k = None
         self.sigma_f = None
+        self.jo_stats = None
 
     @property
     def base_states(self):
@@ -639,8 +691,9 @@ class Fits:
         # Judd-Ofelt fit
         if self.has_strengths:
             f_lines = [[line[0], line[4], line[5]] for line in lines]
-            judd_ofelt, self.sigma_f = judd_ofelt_fit(self.ion, f_lines)
+            judd_ofelt, self.jo_stats = judd_ofelt_fit(self.ion, f_lines)
             self.ion.judd_ofelt = judd_ofelt
+            self.sigma_f = self.jo_stats["sigma"]
             p = format_fixed(judd_ofelt, 3)
             logger.info(f"Judd-Ofelt fit: df: {self.sigma_f:.2f}, parameters: {p}")
 
