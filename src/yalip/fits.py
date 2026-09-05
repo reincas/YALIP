@@ -79,6 +79,8 @@ class MeasLines:
         for line in lines:
             idx, name, value, delta = line[:4]
             if isinstance(idx, tuple):
+                if isinstance(idx[0], tuple):
+                    idx = list(zip(*idx))[0]
                 assert all(a - b == 1 for a, b in zip(idx[1:], idx[:-1]))
                 self.lines[idx[0]] = MeasLine(idx, name[0], value, delta)
                 for i, n in zip(idx[1:], name[1:]):
@@ -429,6 +431,12 @@ class LevelFit:
             if isinstance(idx, int):
                 m = mult[idx]
                 k_calc = energies[idx]
+            elif isinstance(idx[0], tuple):
+                idx, weights = zip(*idx)
+                idx = np.array(idx)
+                weights = np.array(weights)
+                k_calc = np.sum(energies[idx] * weights) / np.sum(weights)
+                m = 0
             else:
                 ##################################################################################################
                 # WARNING: Using the barycenter of overlapping lines is a questionable choice. The correct weight
@@ -510,7 +518,10 @@ def judd_ofelt_fit(ion, lines):
             b[i] = (f_meas - fmd[idx]) / df_meas
             A[i, :] = fed[idx, :] / df_meas
         else:
-            idx = np.array(idx)
+            if isinstance(idx[0], tuple):
+                idx = np.array(list(zip(*idx))[0])
+            else:
+                idx = np.array(idx)
             b[i] = (f_meas - np.sum(fmd[idx])) / df_meas
             A[i, :] = np.sum(fed[idx, :], axis=0) / df_meas
 
