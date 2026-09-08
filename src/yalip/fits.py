@@ -572,7 +572,7 @@ def judd_ofelt_fit(ion, lines, extended=False):
         scale = 1.0
 
     # Return parameter dictionary and statistical data
-    judd_ofelt = {f"JO/{2 * i + 2}": value for i, value in enumerate(x[:3])}
+    judd_ofelt = {f"JO/{2 * i + 2}": float(value) for i, value in enumerate(x[:3])}
     stats = {
         "n_meas": A.shape[0],
         "n_params": A.shape[1],
