@@ -427,7 +427,7 @@ class LevelFit:
 
         # Collect comparison data
         results = []
-        for idx, k_meas, dk_meas in self.lines:
+        for idx, term, k_meas, dk_meas in self.lines:
             if isinstance(idx, int):
                 m = mult[idx]
                 k_calc = energies[idx]
@@ -518,7 +518,7 @@ def judd_ofelt_fit(ion, lines, extended=False):
     n_params = 4 if extended else 3
     A = np.zeros((len(lines), n_params), dtype=float)
     b = np.zeros(len(lines), dtype=float)
-    for i, (idx, f_meas, df_meas) in enumerate(lines):
+    for i, (idx, term, f_meas, df_meas) in enumerate(lines):
         if isinstance(idx, int):
             b[i] = (f_meas - fmd[idx]) / df_meas
             A[i, :3] = fed[idx, :] / df_meas
@@ -561,7 +561,7 @@ def judd_ofelt_fit(ion, lines, extended=False):
     cooks_distance = (std_residuals_sq / rank) * (leverage / (1 - leverage))
 
     # Weighted mean deviation of measured and calculated oscillator strengths
-    df_meas = np.array([line[2] for line in lines])
+    df_meas = np.array([line[3] for line in lines])
     sigma = float(np.sqrt(chi2 / np.sum(1 / df_meas ** 2))) * 1e8
 
     # Apply scale factor from extended Judd-Ofelt fit
@@ -667,7 +667,7 @@ class Fits:
             if not isinstance(stages[0], (list, tuple)):
                 stages = [stages]
 
-            k_lines = [[line[0], line[2], line[3]] for line in lines]
+            k_lines = [[line[0], line[1], line[2], line[3]] for line in lines]
             opt = LevelFit(self.matrices, self.mult, k_lines)
             for i, names in enumerate(stages):
                 raw_names = [n[1:] if n.startswith(":") else n for n in names]
@@ -690,7 +690,7 @@ class Fits:
 
         # Judd-Ofelt fit
         if self.has_strengths:
-            f_lines = [[line[0], line[4], line[5]] for line in lines]
+            f_lines = [[line[0], line[1], line[4], line[5]] for line in lines]
             judd_ofelt, self.jo_stats = judd_ofelt_fit(self.ion, f_lines)
             self.ion.judd_ofelt = judd_ofelt
             self.sigma_f = self.jo_stats["sigma"]
