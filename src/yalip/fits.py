@@ -562,7 +562,7 @@ def judd_ofelt_fit(ion, lines, extended=False):
 
     # Weighted mean deviation of measured and calculated oscillator strengths
     df_meas = np.array([line[3] for line in lines])
-    sigma = float(np.sqrt(chi2 / np.sum(1 / df_meas ** 2))) * 1e8
+    sigma = float(np.sqrt(chi2 / np.sum(1 / df_meas ** 2)))
 
     # Apply scale factor from extended Judd-Ofelt fit
     if extended:
